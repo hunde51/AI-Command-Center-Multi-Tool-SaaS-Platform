@@ -1,0 +1,83 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+frontend/.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+backend/venv/
+
+# Build / packaging
+build/
+dist/
+site/
+pip-wheel-metadata/
+
+# FastAPI / Uvicorn / app runtime
+*.pid
+*.sqlite3
+instance/
+
+# Alembic migrations cache
+backend/app/db/migrations/__pycache__/
+backend/app/db/migrations/versions/__pycache__/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test artifacts
+coverage/
+*.cover
+
+# TypeScript
+*.tsbuildinfo
