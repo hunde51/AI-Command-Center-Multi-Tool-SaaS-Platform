@@ -1,39 +1,40 @@
-import os
-from pathlib import Path
 from urllib.parse import quote_plus
 
+from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-class Settings:
-    def __init__(self) -> None:
-        self._load_env_file()
-        self.postgres_db = os.getenv("POSTGRES_DB", "ai_command_center_db")
-        self.postgres_user = os.getenv("POSTGRES_USER", "postgres")
-        self.postgres_password = os.getenv("POSTGRES_PASSWORD", "")
-        self.postgres_host = os.getenv("POSTGRES_HOST", "localhost")
-        self.postgres_port = os.getenv("POSTGRES_PORT", "5432")
 
-    @property
-    def database_url(self) -> str:
-        encoded_password = quote_plus(self.postgres_password)
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{encoded_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
-    @staticmethod
-    def _load_env_file() -> None:
-        env_file = Path(__file__).resolve().parents[2] / ".env"
-        if not env_file.exists():
-            return
+    database_url: str | None = None
+    jwt_secret_key: str | None = None
+    postgres_db: str = "ai_command_center_db"
+    postgres_user: str = "postgres"
+    postgres_password: str = ""
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 7
 
-        for raw_line in env_file.read_text().splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, value = line.split("=", 1)
-            key = key.strip()
-            value = value.strip().strip("'").strip('"')
-            os.environ.setdefault(key, value)
+    @model_validator(mode="after")
+    def build_database_url(self) -> "Settings":
+        if not self.database_url:
+            encoded_password = quote_plus(self.postgres_password)
+            self.database_url = (
+                f"postgresql+asyncpg://{self.postgres_user}:{encoded_password}"
+                f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            )
+        if not self.jwt_secret_key or not self.jwt_secret_key.strip():
+            raise ValueError(
+                "JWT_SECRET_KEY is required. Set it in backend/.env before running the app."
+            )
+        return self
 
 
 settings = Settings()
