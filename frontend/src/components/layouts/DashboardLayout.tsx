@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { mockUser } from "@/services/mockApi";
+import { clearTokens } from "@/services/backendApi";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -111,7 +112,11 @@ export default function DashboardLayout() {
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/" className="flex items-center gap-2">
+                    <Link
+                      to="/"
+                      className="flex items-center gap-2"
+                      onClick={() => clearTokens()}
+                    >
                       <LogOut className="h-3.5 w-3.5" />
                       Sign Out
                     </Link>
