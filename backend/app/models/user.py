@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Enum, Index, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 from app.models.role import UserRole
@@ -31,6 +34,17 @@ class User(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    conversations: Mapped[list["Conversation"]] = relationship(
+        "Conversation",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    usage_logs: Mapped[list["UsageLog"]] = relationship(
+        "UsageLog",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     __table_args__ = (
