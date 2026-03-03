@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
+    ai_provider: str = "gemini"
+    openai_api_key: str | None = None
+    gemini_api_key: str | None = None
+    default_model_name: str = "gemini-3-flash"
+    max_tokens_limit: int = 800
 
     @model_validator(mode="after")
     def build_database_url(self) -> "Settings":
@@ -34,6 +39,19 @@ class Settings(BaseSettings):
             raise ValueError(
                 "JWT_SECRET_KEY is required. Set it in backend/.env before running the app."
             )
+        provider = self.ai_provider.lower()
+        if provider == "openai":
+            if not self.openai_api_key or not self.openai_api_key.strip():
+                raise ValueError(
+                    "OPENAI_API_KEY is required when AI_PROVIDER=openai."
+                )
+        elif provider == "gemini":
+            if not self.gemini_api_key or not self.gemini_api_key.strip():
+                raise ValueError(
+                    "GEMINI_API_KEY is required when AI_PROVIDER=gemini."
+                )
+        else:
+            raise ValueError("AI_PROVIDER must be either 'openai' or 'gemini'.")
         return self
 
 
