@@ -6,6 +6,7 @@ from app.api.router import api_router
 from app.db.base import Base
 from app.db.session import engine
 from app.services.auth_service import AuthError
+from app.services.chat_service import ChatError
 from app.utils.response_wrapper import api_response
 
 app = FastAPI(title="AI Command Center API", version="0.1.0")
@@ -20,6 +21,14 @@ async def startup_event() -> None:
 
 @app.exception_handler(AuthError)
 async def auth_error_handler(_: Request, exc: AuthError) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=api_response(False, exc.message, {}),
+    )
+
+
+@app.exception_handler(ChatError)
+async def chat_error_handler(_: Request, exc: ChatError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content=api_response(False, exc.message, {}),
