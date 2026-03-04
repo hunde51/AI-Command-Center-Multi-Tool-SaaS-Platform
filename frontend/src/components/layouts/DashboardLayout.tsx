@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -17,8 +17,7 @@ import { LayoutDashboard, MessageSquare, Wand2, BarChart3, Settings, Zap, LogOut
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { mockUser } from "@/services/mockApi";
-import { clearTokens } from "@/services/backendApi";
+import { clearTokens, getUserEmail, getUserName } from "@/services/backendApi";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -31,7 +30,6 @@ const navItems = [
 function DashboardSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -83,6 +81,23 @@ function DashboardSidebar() {
 }
 
 export default function DashboardLayout() {
+  const storedName = getUserName();
+  const userEmail = getUserEmail();
+  const fallbackName = userEmail ? userEmail.split("@")[0] : "";
+  const rawName = (storedName || fallbackName).trim();
+  const displayName = (rawName || "Member")
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "M";
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -91,7 +106,7 @@ export default function DashboardLayout() {
           <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <span className="text-sm font-medium text-muted-foreground">Welcome back, {mockUser.name}</span>
+              <span className="text-sm font-medium text-muted-foreground">Welcome back, {displayName}</span>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="relative">
@@ -102,7 +117,7 @@ export default function DashboardLayout() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">
                     <Avatar className="h-7 w-7">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">AM</AvatarFallback>
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
                     </Avatar>
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </Button>
@@ -112,11 +127,7 @@ export default function DashboardLayout() {
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link
-                      to="/"
-                      className="flex items-center gap-2"
-                      onClick={() => clearTokens()}
-                    >
+                    <Link to="/" className="flex items-center gap-2" onClick={() => clearTokens()}>
                       <LogOut className="h-3.5 w-3.5" />
                       Sign Out
                     </Link>
