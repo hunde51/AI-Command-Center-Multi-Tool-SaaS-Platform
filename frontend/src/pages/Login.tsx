@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { loginWithBackend } from "@/services/backendApi";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -20,9 +21,16 @@ export default function Login() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    toast({ title: "Welcome back!", description: "Redirecting to dashboard..." });
-    navigate("/dashboard");
+    try {
+      await loginWithBackend(email, password);
+      toast({ title: "Welcome back!", description: "Redirecting to dashboard..." });
+      navigate("/dashboard");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Login failed";
+      toast({ title: message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

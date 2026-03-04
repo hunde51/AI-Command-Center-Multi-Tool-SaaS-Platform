@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchUsageStats, fetchDailyUsage, fetchActivities } from "@/services/mockApi";
+import { fetchUsageStats, fetchDailyUsage, fetchActivities, fetchDashboardStatus } from "@/services/runtimeData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, BarChart3, Zap, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -22,6 +22,7 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; 
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ["usageStats"], queryFn: fetchUsageStats });
+  const { data: dashboardStatus } = useQuery({ queryKey: ["dashboardStatus"], queryFn: fetchDashboardStatus });
   const { data: dailyUsage, isLoading: chartLoading } = useQuery({ queryKey: ["dailyUsage"], queryFn: fetchDailyUsage });
   const { data: activities, isLoading: activitiesLoading } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
 
@@ -30,6 +31,7 @@ export default function Dashboard() {
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Overview of your AI usage and activity.</p>
+        {dashboardStatus ? <p className="text-xs text-primary mt-1">Backend connected: role {dashboardStatus.role}</p> : null}
       </div>
 
       {/* Stats Cards */}
