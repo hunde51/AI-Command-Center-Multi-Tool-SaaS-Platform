@@ -58,3 +58,17 @@ class ChatRepository:
             .order_by(Message.created_at.asc())
         )
         return list(result.scalars().all())
+
+    async def update_conversation_title(
+        self,
+        *,
+        conversation: Conversation,
+        title: str,
+    ) -> Conversation:
+        conversation.title = title
+        await self.db.flush()
+        return conversation
+
+    async def delete_conversation(self, *, conversation: Conversation) -> None:
+        await self.db.delete(conversation)
+        await self.db.flush()
