@@ -63,3 +63,15 @@ class ChatResponse(BaseModel):
 class ConversationHistoryResponse(BaseModel):
     conversation: ConversationRead
     messages: list[MessageRead]
+
+
+class ConversationRenameRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Title cannot be empty")
+        return cleaned

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from fastapi import status
 from uuid import UUID
 
@@ -47,7 +48,7 @@ class ChatService:
             if not conversation or conversation.user_id != current_user.id:
                 raise ChatError("Conversation not found", status.HTTP_404_NOT_FOUND)
         if conversation is None:
-            title = message[:60] if len(message) > 60 else message
+            title = self._build_conversation_title(message)
             conversation = await self.chat_repo.create_conversation(user_id=current_user.id, title=title)
 
         cost_estimate = 0.0
@@ -134,3 +135,47 @@ class ChatService:
             conversation=ConversationRead.model_validate(conversation),
             messages=[MessageRead.model_validate(msg) for msg in messages],
         )
+
+    async def rename_conversation(
+        self,
+        *,
+        current_user: User,
+        conversation_id: UUID,
+        title: str,
+    ) -> ConversationRead:
+        conversation = await self.chat_repo.get_conversation_by_id(conversation_id=conversation_id)
+        if not conversation or conversation.user_id != current_user.id:
+            raise ChatError("Conversation not found", status.HTTP_404_NOT_FOUND)
+        await self.chat_repo.update_conversation_title(conversation=conversation, title=title.strip())
+        await self.chat_repo.db.commit()
+        await self.chat_repo.db.refresh(conversation)
+        return ConversationRead.model_validate(conversation)
+
+    async def delete_conversation(self, *, current_user: User, conversation_id: UUID) -> None:
+        conversation = await self.chat_repo.get_conversation_by_id(conversation_id=conversation_id)
+        if not conversation or conversation.user_id != current_user.id:
+            raise ChatError("Conversation not found", status.HTTP_404_NOT_FOUND)
+        await self.chat_repo.delete_conversation(conversation=conversation)
+        await self.chat_repo.db.commit()
+
+    def _build_conversation_title(self, message: str) -> str:
+        tokens = re.findall(r"[A-Za-z0-9']+", message.lower())
+        stopwords = {
+            "the", "a", "an", "and", "or", "to", "for", "with", "of", "on", "in",
+            "is", "are", "be", "can", "you", "i", "me", "my", "we", "our", "it",
+            "this", "that", "about", "help", "please",
+        }
+        keywords: list[str] = []
+        for token in tokens:
+            if len(token) < 3 or token in stopwords:
+                continue
+            if token not in keywords:
+                keywords.append(token)
+            if len(keywords) == 6:
+                break
+        if keywords:
+            return " ".join(word.capitalize() for word in keywords)
+        fallback = message.strip()
+        if not fallback:
+            return "New Conversation"
+        return fallback[:60]
