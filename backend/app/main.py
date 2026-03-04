@@ -8,6 +8,7 @@ from app.db.base import Base
 from app.db.session import engine
 from app.services.auth_service import AuthError
 from app.services.chat_service import ChatError
+from app.services.tool_service import ToolServiceError
 from app.utils.response_wrapper import api_response
 
 app = FastAPI(title="AI Command Center API", version="0.1.0")
@@ -44,6 +45,14 @@ async def auth_error_handler(_: Request, exc: AuthError) -> JSONResponse:
 
 @app.exception_handler(ChatError)
 async def chat_error_handler(_: Request, exc: ChatError) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=api_response(False, exc.message, {}),
+    )
+
+
+@app.exception_handler(ToolServiceError)
+async def tool_service_error_handler(_: Request, exc: ToolServiceError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content=api_response(False, exc.message, {}),
