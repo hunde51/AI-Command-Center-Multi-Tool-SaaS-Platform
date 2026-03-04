@@ -21,9 +21,6 @@ class GeminiProvider(AIProvider):
         prompt: str,
         messages: list[dict[str, str]] | None = None,
     ) -> dict:
-        base_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        url = f"{base_url}?key={settings.gemini_api_key}"
-
         chat_messages = messages or [{"role": "user", "content": prompt}]
         contents = [
             {
@@ -41,28 +38,50 @@ class GeminiProvider(AIProvider):
             },
         }
 
+        candidate_models = [model, "gemini-2.5-flash", "gemini-2.0-flash"]
+        seen: set[str] = set()
         last_error: Exception | None = None
-        for attempt in range(2):
-            try:
-                async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-                    response = await client.post(url, json=payload)
-                response.raise_for_status()
-                body = response.json()
-                candidates = body.get("candidates", [])
-                if not candidates:
-                    raise AIProviderError("AI provider returned no response")
-                parts = candidates[0].get("content", {}).get("parts", [])
-                content = "\n".join(part.get("text", "") for part in parts).strip()
-                if not content:
-                    raise AIProviderError("AI provider returned empty response")
-                return {
-                    "content": content,
-                    "model_used": model,
-                    "usage": self.calculate_tokens(body),
-                }
-            except Exception as exc:  # noqa: BLE001
-                last_error = exc
-                logger.exception("Gemini call failed on attempt %s", attempt + 1)
+
+        for candidate in candidate_models:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{candidate}:generateContent?key={settings.gemini_api_key}"
+            )
+
+            for attempt in range(2):
+                try:
+                    async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+                        response = await client.post(url, json=payload)
+
+                    if response.status_code == 404:
+                        logger.warning("Gemini model not found: %s", candidate)
+                        break
+
+                    response.raise_for_status()
+                    body = response.json()
+                    candidates = body.get("candidates", [])
+                    if not candidates:
+                        raise AIProviderError("AI provider returned no response")
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    content = "\n".join(part.get("text", "") for part in parts).strip()
+                    if not content:
+                        raise AIProviderError("AI provider returned empty response")
+                    return {
+                        "content": content,
+                        "model_used": candidate,
+                        "usage": self.calculate_tokens(body),
+                    }
+                except Exception as exc:  # noqa: BLE001
+                    last_error = exc
+                    logger.exception(
+                        "Gemini call failed on attempt %s using model %s",
+                        attempt + 1,
+                        candidate,
+                    )
 
         if last_error is None:
             last_error = RuntimeError("Unknown AI provider error")
@@ -85,5 +104,14 @@ class GeminiProvider(AIProvider):
         if isinstance(exc, httpx.TimeoutException):
             return AIProviderError("AI provider request timed out")
         if isinstance(exc, httpx.HTTPStatusError):
-            return AIProviderError("AI provider request failed")
+            status_code = exc.response.status_code
+            detail = ""
+            try:
+                payload = exc.response.json()
+                detail = payload.get("error", {}).get("message", "")
+            except Exception:  # noqa: BLE001
+                detail = exc.response.text[:200]
+            if detail:
+                return AIProviderError(f"AI provider request failed ({status_code}): {detail}")
+            return AIProviderError(f"AI provider request failed ({status_code})")
         return AIProviderError("AI provider is unavailable")

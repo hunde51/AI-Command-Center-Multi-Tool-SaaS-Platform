@@ -13,7 +13,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.repositories.chat_repo import ChatRepository
 from app.repositories.usage_repo import UsageRepository
-from app.schemas.chat import ChatRequest
+from app.schemas.chat import ChatRequest, ConversationRenameRequest
 from app.services.chat_service import ChatService
 from app.utils.response_wrapper import api_response
 
@@ -97,3 +97,40 @@ async def get_conversation(
         conversation_id=conversation_id,
     )
     return api_response(True, "Conversation fetched", result.model_dump())
+
+
+@router.patch("/{conversation_id}")
+async def rename_conversation(
+    conversation_id: UUID,
+    payload: ConversationRenameRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    service = ChatService(
+        chat_repo=ChatRepository(db),
+        provider=get_ai_provider(),
+        model_selector=ModelSelector(),
+        token_tracker=TokenTracker(UsageRepository(db)),
+    )
+    updated = await service.rename_conversation(
+        current_user=current_user,
+        conversation_id=conversation_id,
+        title=payload.title,
+    )
+    return api_response(True, "Conversation renamed", {"conversation": updated.model_dump()})
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(
+    conversation_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    service = ChatService(
+        chat_repo=ChatRepository(db),
+        provider=get_ai_provider(),
+        model_selector=ModelSelector(),
+        token_tracker=TokenTracker(UsageRepository(db)),
+    )
+    await service.delete_conversation(current_user=current_user, conversation_id=conversation_id)
+    return api_response(True, "Conversation deleted", {})
