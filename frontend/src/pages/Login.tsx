@@ -5,9 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loginWithBackend } from "@/services/backendApi";
+import { loginWithBackend, registerWithBackend } from "@/services/backendApi";
 
 export default function Login() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,17 +19,23 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!email || !password || (mode === "signup" && (!name || !username))) {
       toast({ title: "Please fill in all fields", variant: "destructive" });
       return;
     }
     setLoading(true);
     try {
+      if (mode === "signup") {
+        await registerWithBackend({ name, username, email, password });
+      }
       await loginWithBackend(email, password);
-      toast({ title: "Welcome back!", description: "Redirecting to dashboard..." });
+      toast({
+        title: mode === "signup" ? "Account created" : "Welcome back!",
+        description: "Redirecting to dashboard...",
+      });
       navigate("/dashboard");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed";
+      const message = error instanceof Error ? error.message : "Authentication failed";
       toast({ title: message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -35,7 +44,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left - Form */}
       <div className="flex-1 flex items-center justify-center p-8 pt-24">
         <div className="w-full max-w-sm">
           <Link to="/" className="flex items-center gap-2 mb-8">
@@ -45,10 +53,26 @@ export default function Login() {
             <span className="font-display font-bold text-lg text-foreground">AI Command Center</span>
           </Link>
 
-          <h1 className="font-display text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to your account to continue</p>
+          <h1 className="font-display text-2xl font-bold text-foreground">
+            {mode === "signin" ? "Welcome back" : "Create account"}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {mode === "signin" ? "Sign in to your account to continue" : "Create your account to get started"}
+          </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            {mode === "signup" ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input id="username" placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+                </div>
+              </>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -56,23 +80,28 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
+                {mode === "signin" ? <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a> : null}
               </div>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? (mode === "signin" ? "Signing in..." : "Creating account...") : (mode === "signin" ? "Sign In" : "Sign Up")}
             </Button>
           </form>
 
           <p className="text-sm text-muted-foreground text-center mt-6">
-            Don't have an account?{" "}
-            <Link to="/login" className="text-primary font-medium hover:underline">Sign up</Link>
+            {mode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
+            <button
+              type="button"
+              className="text-primary font-medium hover:underline"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            >
+              {mode === "signin" ? "Sign up" : "Sign in"}
+            </button>
           </p>
         </div>
       </div>
 
-      {/* Right - Visual */}
       <div className="hidden lg:flex flex-1 hero-gradient hero-grid items-center justify-center relative overflow-hidden">
         <div className="absolute h-[400px] w-[400px] rounded-full bg-primary/10 blur-[100px] animate-pulse-glow" />
         <div className="relative z-10 text-center p-12 max-w-md">
