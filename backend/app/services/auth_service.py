@@ -27,6 +27,7 @@ class AuthService:
             raise AuthError("Unable to process registration request")
 
         user = User(
+            name=payload.name,
             email=payload.email,
             username=payload.username,
             hashed_password=hash_password(payload.password),
