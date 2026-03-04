@@ -76,7 +76,7 @@ class ChatService:
                 messages=history,
             )
             usage = ai_result["usage"]
-            assistant_content = ai_result["content"]
+            assistant_content = self._normalize_assistant_content(ai_result["content"])
             assistant_message = await self.chat_repo.create_message(
                 conversation_id=conversation.id,
                 role="assistant",
@@ -179,3 +179,16 @@ class ChatService:
         if not fallback:
             return "New Conversation"
         return fallback[:60]
+
+    def _normalize_assistant_content(self, content: str) -> str:
+        cleaned = content.strip()
+        if not cleaned:
+            return cleaned
+
+        cleaned = re.sub(r"\*\*(.*?)\*\*", r"\1", cleaned)
+        cleaned = re.sub(r"__(.*?)__", r"\1", cleaned)
+
+        if len(cleaned) >= 2 and cleaned[0] == cleaned[-1] and cleaned[0] in {'"', "'"}:
+            cleaned = cleaned[1:-1].strip()
+
+        return cleaned

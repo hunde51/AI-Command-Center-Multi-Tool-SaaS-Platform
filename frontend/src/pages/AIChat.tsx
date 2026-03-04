@@ -33,6 +33,8 @@ export default function AIChat() {
   const [conversationForAction, setConversationForAction] = useState<Conversation | null>(null);
   const [model, setModel] = useState("configured-model");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const [isStreamingAssistant, setIsStreamingAssistant] = useState(false);
+  const [suspendHistorySync, setSuspendHistorySync] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations, isLoading } = useQuery({
@@ -59,8 +61,11 @@ export default function AIChat() {
       setLocalMessages([]);
       return;
     }
+    if (suspendHistorySync) {
+      return;
+    }
     setLocalMessages(history || []);
-  }, [history, isCreatingNewChat]);
+  }, [history, isCreatingNewChat, suspendHistorySync]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,6 +77,35 @@ export default function AIChat() {
     onSuccess: async (result) => {
       setIsCreatingNewChat(false);
       setSelectedConvId(result.conversation.id);
+      const assistantText = result.assistant_message.content || "";
+
+      setSuspendHistorySync(true);
+      setIsStreamingAssistant(true);
+
+      const streamId = `stream_${Date.now()}`;
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: streamId,
+          role: "assistant",
+          content: "",
+          timestamp: new Date(result.assistant_message.created_at),
+        },
+      ]);
+
+      let visibleLength = 0;
+      const step = Math.max(1, Math.ceil(assistantText.length / 120));
+      while (visibleLength < assistantText.length) {
+        visibleLength = Math.min(assistantText.length, visibleLength + step);
+        const partial = assistantText.slice(0, visibleLength);
+        setLocalMessages((prev) =>
+          prev.map((msg) => (msg.id === streamId ? { ...msg, content: partial } : msg)),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 14));
+      }
+
+      setIsStreamingAssistant(false);
+      setSuspendHistorySync(false);
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
       await queryClient.invalidateQueries({ queryKey: ["conversation", result.conversation.id] });
     },
@@ -109,7 +143,7 @@ export default function AIChat() {
   });
 
   const handleSend = () => {
-    if (!inputValue.trim() || mutation.isPending) return;
+    if (!inputValue.trim() || mutation.isPending || isStreamingAssistant) return;
     const content = inputValue.trim();
     const userMsg: Message = {
       id: `tmp_${Date.now()}`,
@@ -158,10 +192,10 @@ export default function AIChat() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] -m-6 bg-background">
-      <div className="w-72 border-r bg-card flex flex-col shrink-0 hidden md:flex">
-        <div className="p-4 border-b">
-          <Button variant="outline" className="w-full gap-2 justify-start" onClick={handleNewChat}>
+    <div className="flex h-[calc(100vh-5rem)] -m-6 bg-gradient-to-br from-stone-50 via-amber-50/60 to-slate-50">
+      <div className="w-72 border-r border-stone-200/80 bg-stone-50/80 backdrop-blur-sm flex flex-col shrink-0 hidden md:flex">
+        <div className="p-4 border-b border-stone-200/70">
+          <Button variant="outline" className="w-full gap-2 justify-start border-stone-300 bg-stone-100/80 hover:bg-stone-100 text-stone-900" onClick={handleNewChat}>
             <Plus className="h-4 w-4" /> New Chat
           </Button>
         </div>
@@ -173,7 +207,7 @@ export default function AIChat() {
                   <div
                     key={c.id}
                     className={`w-full rounded-lg px-2 py-1 text-sm transition-colors ${
-                      selectedConvId === c.id ? "bg-secondary" : "hover:bg-secondary/50"
+                      selectedConvId === c.id ? "bg-stone-200/70" : "hover:bg-stone-200/50"
                     }`}
                   >
                     <div className="flex items-center gap-1">
@@ -208,19 +242,19 @@ export default function AIChat() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="md:hidden border-b px-3 py-2 flex items-center justify-between gap-2">
+        <div className="md:hidden border-b border-stone-200/70 px-3 py-2 flex items-center justify-between gap-2 bg-stone-50/80">
           <Sheet open={mobileHistoryOpen} onOpenChange={setMobileHistoryOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" aria-label="Open conversations">
                 <PanelLeft className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[85vw] max-w-sm p-0">
-              <SheetHeader className="px-4 py-3 border-b">
+              <SheetContent side="left" className="w-[85vw] max-w-sm p-0 bg-stone-50">
+              <SheetHeader className="px-4 py-3 border-b border-stone-200/70">
                 <SheetTitle>Conversations</SheetTitle>
               </SheetHeader>
-              <div className="p-4 border-b">
-                <Button variant="outline" className="w-full gap-2 justify-start" onClick={handleNewChat}>
+              <div className="p-4 border-b border-stone-200/70">
+                <Button variant="outline" className="w-full gap-2 justify-start border-stone-300 bg-stone-100/80 hover:bg-stone-100 text-stone-900" onClick={handleNewChat}>
                   <Plus className="h-4 w-4" /> New Chat
                 </Button>
               </div>
@@ -232,7 +266,7 @@ export default function AIChat() {
                         <div
                           key={c.id}
                           className={`w-full rounded-lg px-2 py-1 text-sm transition-colors ${
-                            selectedConvId === c.id ? "bg-secondary" : "hover:bg-secondary/50"
+                            selectedConvId === c.id ? "bg-stone-200/70" : "hover:bg-stone-200/50"
                           }`}
                         >
                           <div className="flex items-center gap-1">
@@ -275,10 +309,10 @@ export default function AIChat() {
           </Button>
         </div>
 
-        <div className="h-12 border-b hidden md:flex items-center justify-between px-4 shrink-0">
+        <div className="h-12 border-b border-stone-200/70 hidden md:flex items-center justify-between px-4 shrink-0 bg-stone-50/80">
           <h2 className="text-sm font-semibold text-foreground truncate">{selectedConv?.title || "New conversation"}</h2>
           <Select value={model} onValueChange={setModel}>
-            <SelectTrigger className="w-44 h-8 text-xs">
+            <SelectTrigger className="w-44 h-8 text-xs border-stone-300 bg-stone-100/80 text-stone-900">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -291,8 +325,8 @@ export default function AIChat() {
           <div className="max-w-3xl mx-auto py-6 space-y-6">
             {localMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                  <MessageSquare className="h-6 w-6 text-primary" />
+                <div className="h-12 w-12 rounded-2xl bg-stone-200/80 flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-stone-700" />
                 </div>
                 <h3 className="font-display font-semibold text-foreground">Start a conversation</h3>
                 <p className="text-sm text-muted-foreground mt-1 max-w-sm">Ask anything and AI will respond with context from this chat.</p>
@@ -301,29 +335,33 @@ export default function AIChat() {
               localMessages.map((msg) => (
                 <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
                   {msg.role === "assistant" && (
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <Bot className="h-4 w-4 text-primary" />
+                    <div className="h-8 w-8 rounded-lg bg-stone-200/80 border border-stone-300/70 flex items-center justify-center shrink-0 mt-0.5">
+                      <Bot className="h-4 w-4 text-stone-700" />
                     </div>
                   )}
-                  <div className={`rounded-2xl px-4 py-3 max-w-[80%] text-sm leading-relaxed ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}>
+                  <div className={`rounded-2xl px-4 py-3 max-w-[80%] text-sm leading-relaxed border ${
+                    msg.role === "user"
+                      ? "bg-amber-100/70 text-stone-900 border-amber-200"
+                      : "bg-white/85 text-stone-900 border-stone-200 shadow-sm"
+                  }`}>
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                   {msg.role === "user" && (
-                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                    <div className="h-8 w-8 rounded-lg bg-stone-200/80 border border-stone-300/70 flex items-center justify-center shrink-0 mt-0.5">
+                      <User className="h-4 w-4 text-stone-700" />
                     </div>
                   )}
                 </div>
               ))
             )}
-            {mutation.isPending && (
+            {mutation.isPending && !isStreamingAssistant && (
               <div className="flex gap-3">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Bot className="h-4 w-4 text-primary" />
+                <div className="h-8 w-8 rounded-lg bg-stone-200/80 border border-stone-300/70 flex items-center justify-center shrink-0">
+                  <Bot className="h-4 w-4 text-stone-700" />
                 </div>
-                <div className="rounded-2xl bg-secondary px-4 py-3 flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Thinking...</span>
+                <div className="rounded-2xl bg-white/85 border border-stone-200 shadow-sm px-4 py-3 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-stone-500" />
+                  <span className="text-sm text-stone-500">Thinking...</span>
                 </div>
               </div>
             )}
@@ -331,9 +369,9 @@ export default function AIChat() {
           </div>
         </ScrollArea>
 
-        <div className="border-t p-4">
+        <div className="border-t border-stone-200/70 p-4 bg-stone-50/80">
           <div className="max-w-3xl mx-auto flex gap-2">
-            <Button variant="ghost" size="icon" className="shrink-0" disabled={mutation.isPending} onClick={() => selectedConvId && queryClient.invalidateQueries({ queryKey: ["conversation", selectedConvId] })}>
+            <Button variant="ghost" size="icon" className="shrink-0 text-stone-600 hover:bg-stone-200/60 hover:text-stone-800" disabled={mutation.isPending} onClick={() => selectedConvId && queryClient.invalidateQueries({ queryKey: ["conversation", selectedConvId] })}>
               <RefreshCw className="h-4 w-4" />
             </Button>
             <Input
@@ -341,10 +379,10 @@ export default function AIChat() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              disabled={mutation.isPending}
-              className="flex-1"
+              disabled={mutation.isPending || isStreamingAssistant}
+              className="flex-1 border-stone-300 bg-white/90 text-stone-900 placeholder:text-stone-400"
             />
-            <Button size="icon" onClick={handleSend} disabled={mutation.isPending || !inputValue.trim()}>
+            <Button size="icon" className="bg-stone-800 text-stone-100 hover:bg-stone-700" onClick={handleSend} disabled={mutation.isPending || isStreamingAssistant || !inputValue.trim()}>
               <Send className="h-4 w-4" />
             </Button>
           </div>

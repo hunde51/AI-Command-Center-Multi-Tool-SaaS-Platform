@@ -33,6 +33,17 @@ class GeminiProvider(AIProvider):
 
         payload = {
             "contents": contents,
+            "systemInstruction": {
+                "parts": [
+                    {
+                        "text": (
+                            "Respond in plain, professional English. "
+                            "Do not use Markdown formatting, including bold, italics, "
+                            "bullet markers, or wrapping quotation marks unless requested."
+                        )
+                    }
+                ]
+            },
             "generationConfig": {
                 "maxOutputTokens": settings.max_tokens_limit,
             },

@@ -1,4 +1,5 @@
 import { Outlet, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { clearTokens, getUserEmail, getUserName } from "@/services/backendApi";
+import { fetchUsageStats } from "@/services/runtimeData";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -30,6 +32,11 @@ const navItems = [
 function DashboardSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const { data: usageStats } = useQuery({ queryKey: ["usageStats"], queryFn: fetchUsageStats });
+
+  const tokensUsed = usageStats?.totalTokens ?? 0;
+  const tokensLimit = 100000;
+  const usagePercent = Math.max(0, Math.min(100, Math.round((tokensUsed / tokensLimit) * 100)));
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -70,9 +77,11 @@ function DashboardSidebar() {
           <div className="rounded-lg bg-sidebar-accent p-3">
             <p className="text-xs font-medium text-sidebar-foreground">Pro Plan</p>
             <div className="mt-1 h-1.5 rounded-full bg-sidebar-border overflow-hidden">
-              <div className="h-full rounded-full bg-sidebar-primary" style={{ width: "84%" }} />
+              <div className="h-full rounded-full bg-sidebar-primary" style={{ width: `${usagePercent}%` }} />
             </div>
-            <p className="text-xs text-sidebar-foreground/60 mt-1">84,250 / 100,000 tokens</p>
+            <p className="text-xs text-sidebar-foreground/60 mt-1">
+              {tokensUsed.toLocaleString()} / {tokensLimit.toLocaleString()} tokens
+            </p>
           </div>
         )}
       </div>
