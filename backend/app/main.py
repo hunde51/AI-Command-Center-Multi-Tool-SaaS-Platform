@@ -4,8 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
-from app.db.base import Base
-from app.db.session import engine
 from app.services.auth_service import AuthError
 from app.services.chat_service import ChatError
 from app.services.tool_service import ToolServiceError
@@ -27,13 +25,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(api_router)
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
 
 @app.exception_handler(AuthError)
 async def auth_error_handler(_: Request, exc: AuthError) -> JSONResponse:

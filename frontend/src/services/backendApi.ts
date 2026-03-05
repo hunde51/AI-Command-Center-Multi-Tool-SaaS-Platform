@@ -1,4 +1,4 @@
-import type { Conversation, Message } from "@/types";
+import type { Activity, Conversation, DailyUsage, Message, UsageStats } from "@/types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const ACCESS_TOKEN_KEY = "access_token";
@@ -126,6 +126,37 @@ type ChatSendPayload = {
   };
 };
 
+type ToolRead = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  system_prompt_template: string;
+  input_schema: Record<string, unknown>;
+  is_active: boolean;
+  version: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type ToolExecutionPayload = {
+  tool: ToolRead;
+  output: string;
+  tokens_used: number;
+  cost_estimate: number;
+  model_used: string;
+};
+
+type ToolHistoryItem = {
+  id: string;
+  tool_id: string;
+  tool_slug: string;
+  tool_name: string;
+  tokens_used: number;
+  cost_estimate: number;
+  created_at: string;
+};
+
 type ChatConversationsPayload = {
   conversations: Array<{
     id: string;
@@ -148,6 +179,40 @@ type ChatHistoryPayload = {
     content: string;
     created_at: string;
   }>;
+};
+
+type UsageStatsPayload = {
+  total_tokens: number;
+  total_requests: number;
+  active_tools: number;
+  uptime: number;
+};
+
+type DailyUsagePayload = {
+  daily_usage: Array<{
+    date: string;
+    tokens: number;
+    requests: number;
+  }>;
+};
+
+type ActivitiesPayload = {
+  activities: Array<{
+    id: string;
+    action: string;
+    tool: string;
+    timestamp: string;
+    tokens: number;
+    status: "success" | "error" | "pending";
+  }>;
+};
+
+type ToolsPayload = {
+  tools: ToolRead[];
+};
+
+type ToolHistoryPayload = {
+  history: ToolHistoryItem[];
 };
 
 function toMessage(item: { id: string; role: "user" | "assistant"; content: string; created_at: string }): Message {
@@ -229,6 +294,102 @@ export async function renameChatConversation(conversationId: string, title: stri
 
 export async function deleteChatConversation(conversationId: string): Promise<void> {
   await request<ApiEnvelope<Record<string, never>>>(`/chat/${conversationId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchUsageStatsFromBackend(): Promise<UsageStats> {
+  const result = await request<ApiEnvelope<UsageStatsPayload>>("/analytics/usage-stats");
+  return {
+    totalTokens: result.data.total_tokens,
+    totalRequests: result.data.total_requests,
+    activeTools: result.data.active_tools,
+    uptime: result.data.uptime,
+  };
+}
+
+export async function fetchDailyUsageFromBackend(): Promise<DailyUsage[]> {
+  const result = await request<ApiEnvelope<DailyUsagePayload>>("/analytics/daily-usage");
+  return result.data.daily_usage.map((row) => ({
+    date: row.date,
+    tokens: row.tokens,
+    requests: row.requests,
+  }));
+}
+
+export async function fetchActivitiesFromBackend(): Promise<Activity[]> {
+  const result = await request<ApiEnvelope<ActivitiesPayload>>("/analytics/activities");
+  return result.data.activities;
+}
+
+export async function fetchActiveToolsFromBackend(): Promise<ToolRead[]> {
+  const result = await request<ApiEnvelope<ToolsPayload>>("/tools");
+  return result.data.tools;
+}
+
+export async function executeToolFromBackend(slug: string, input: string): Promise<ToolExecutionPayload> {
+  const result = await request<ApiEnvelope<ToolExecutionPayload>>(`/tools/${slug}`, {
+    method: "POST",
+    body: JSON.stringify({ input }),
+  });
+  return result.data;
+}
+
+export async function fetchAdminToolsFromBackend(): Promise<ToolRead[]> {
+  const result = await request<ApiEnvelope<ToolsPayload>>("/admin/tools");
+  return result.data.tools;
+}
+
+export async function setAdminToolActive(toolId: string, isActive: boolean): Promise<ToolRead> {
+  const result = await request<ApiEnvelope<{ tool: ToolRead }>>(`/admin/tools/${toolId}/activate`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: isActive }),
+  });
+  return result.data.tool;
+}
+
+export async function fetchToolHistoryFromBackend(): Promise<ToolHistoryItem[]> {
+  const result = await request<ApiEnvelope<ToolHistoryPayload>>("/tools/history");
+  return result.data.history;
+}
+
+export async function createAdminTool(payload: {
+  name: string;
+  slug: string;
+  description: string;
+  system_prompt_template: string;
+  input_schema: Record<string, unknown>;
+  is_active: boolean;
+  version: number;
+}): Promise<ToolRead> {
+  const result = await request<ApiEnvelope<{ tool: ToolRead }>>("/admin/tools", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return result.data.tool;
+}
+
+export async function updateAdminTool(
+  toolId: string,
+  payload: {
+    name: string;
+    slug: string;
+    description: string;
+    system_prompt_template: string;
+    input_schema: Record<string, unknown>;
+    is_active: boolean;
+    version: number;
+  },
+): Promise<ToolRead> {
+  const result = await request<ApiEnvelope<{ tool: ToolRead }>>(`/admin/tools/${toolId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  return result.data.tool;
+}
+
+export async function deleteAdminTool(toolId: string): Promise<void> {
+  await request<ApiEnvelope<Record<string, never>>>(`/admin/tools/${toolId}`, {
     method: "DELETE",
   });
 }
