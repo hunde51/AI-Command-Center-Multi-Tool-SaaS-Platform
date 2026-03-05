@@ -4,6 +4,8 @@ import {
   deleteChatConversation,
   fetchChatConversationHistory,
   fetchChatConversations,
+  getUserEmail,
+  getUserName,
   renameChatConversation,
   sendChatMessage,
 } from "@/services/backendApi";
@@ -21,10 +23,43 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function AIChat() {
+  const buildDisplayName = () => {
+    const storedName = getUserName();
+    const userEmail = getUserEmail();
+    const fallbackName = userEmail ? userEmail.split("@")[0] : "";
+    const rawName = (storedName || fallbackName).trim();
+    const displayName = rawName
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+    return displayName || "there";
+  };
+
+  const buildWelcomeMessage = () => {
+    const ethiopiaHour = Number(
+      new Intl.DateTimeFormat("en-US", {
+        hour: "numeric",
+        hour12: false,
+        timeZone: "Africa/Addis_Ababa",
+      }).format(new Date()),
+    );
+    const period =
+      ethiopiaHour < 12
+        ? "morning"
+        : ethiopiaHour < 18
+          ? "afternoon"
+          : ethiopiaHour < 21
+            ? "evening"
+            : "night";
+    const name = buildDisplayName();
+    return `Good ${period}, ${name}. Welcome to your new chat.\n\nHow can I help you today?`;
+  };
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
-  const [isCreatingNewChat, setIsCreatingNewChat] = useState(false);
+  const [isCreatingNewChat, setIsCreatingNewChat] = useState(true);
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
@@ -75,9 +110,13 @@ export default function AIChat() {
     mutationFn: ({ content, conversationId }: { content: string; conversationId: string | null }) =>
       sendChatMessage(conversationId, content),
     onSuccess: async (result) => {
+      const shouldPrefixGreeting = isCreatingNewChat;
       setIsCreatingNewChat(false);
       setSelectedConvId(result.conversation.id);
-      const assistantText = result.assistant_message.content || "";
+      const assistantRawText = result.assistant_message.content || "";
+      const assistantText = shouldPrefixGreeting
+        ? `${buildWelcomeMessage()}\n\n${assistantRawText}`
+        : assistantRawText;
 
       setSuspendHistorySync(true);
       setIsStreamingAssistant(true);
