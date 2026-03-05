@@ -1,4 +1,13 @@
-import { fetchActivities, fetchDailyUsage, fetchUsageStats } from "@/services/mockApi";
-import { fetchDashboardStatus } from "@/services/backendApi";
+import {
+  fetchActivitiesFromBackend,
+  fetchDailyUsageFromBackend,
+  fetchUsageStatsFromBackend,
+  fetchDashboardStatus,
+} from "@/services/backendApi";
 
-export { fetchActivities, fetchDailyUsage, fetchUsageStats, fetchDashboardStatus };
+export {
+  fetchActivitiesFromBackend as fetchActivities,
+  fetchDailyUsageFromBackend as fetchDailyUsage,
+  fetchUsageStatsFromBackend as fetchUsageStats,
+  fetchDashboardStatus,
+};
