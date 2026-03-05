@@ -40,5 +40,10 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    tool_usages: Mapped[list["ToolUsage"]] = relationship(
+        "ToolUsage",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (Index("ix_users_email_username", "email", "username"),)
