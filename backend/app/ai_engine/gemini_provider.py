@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 import httpx
 
@@ -122,6 +123,18 @@ class GeminiProvider(AIProvider):
                 detail = payload.get("error", {}).get("message", "")
             except Exception:  # noqa: BLE001
                 detail = exc.response.text[:200]
+            if status_code == 429:
+                retry_match = re.search(r"retry in ([0-9.]+)s", detail, flags=re.IGNORECASE)
+                retry_hint = (
+                    f" Retry after ~{retry_match.group(1)}s."
+                    if retry_match
+                    else ""
+                )
+                return AIProviderError(
+                    "Gemini quota/rate limit reached (HTTP 429). "
+                    "Check Gemini API billing and quotas for your key/project,"
+                    " or switch provider/model." + retry_hint
+                )
             if detail:
                 return AIProviderError(f"AI provider request failed ({status_code}): {detail}")
             return AIProviderError(f"AI provider request failed ({status_code})")
