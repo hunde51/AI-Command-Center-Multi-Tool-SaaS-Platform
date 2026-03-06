@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchUsageLogs } from "@/services/adminMockApi";
+import { fetchAdminLogsFromBackend } from "@/services/backendApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function UsageLogs() {
-  const { data: logs, isLoading } = useQuery({ queryKey: ["usage-logs"], queryFn: fetchUsageLogs });
+  const { data: logs, isLoading } = useQuery({ queryKey: ["admin-logs"], queryFn: () => fetchAdminLogsFromBackend({ page: 1, limit: 50 }) });
 
   return (
     <div className="space-y-6">
@@ -27,10 +27,8 @@ export default function UsageLogs() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Action</TableHead>
-                  <TableHead>Tool</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Tokens</TableHead>
-                  <TableHead>Duration</TableHead>
+                  <TableHead>Target User</TableHead>
+                  <TableHead>Metadata</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Timestamp</TableHead>
                 </TableRow>
@@ -38,16 +36,14 @@ export default function UsageLogs() {
               <TableBody>
                 {logs?.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell className="font-medium">{log.userName}</TableCell>
+                    <TableCell className="font-medium">{log.admin_id.slice(0, 8)}...</TableCell>
                     <TableCell>{log.action}</TableCell>
-                    <TableCell className="text-muted-foreground">{log.tool}</TableCell>
-                    <TableCell><Badge variant="secondary">{log.model}</Badge></TableCell>
-                    <TableCell>{log.tokens.toLocaleString()}</TableCell>
-                    <TableCell>{log.duration}s</TableCell>
+                    <TableCell className="text-muted-foreground">{log.target_user_id ? `${log.target_user_id.slice(0, 8)}...` : "-"}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs max-w-[320px] truncate">{JSON.stringify(log.metadata)}</TableCell>
                     <TableCell>
-                      <Badge variant={log.status === "success" ? "default" : "destructive"}>{log.status}</Badge>
+                      <Badge variant="default">success</Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{log.timestamp}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{new Date(log.created_at).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

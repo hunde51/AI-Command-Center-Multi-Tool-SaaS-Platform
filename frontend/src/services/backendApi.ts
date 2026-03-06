@@ -215,6 +215,73 @@ type ToolHistoryPayload = {
   history: ToolHistoryItem[];
 };
 
+type AdminUsersPayload = {
+  items: Array<{
+    user_id: string;
+    email: string;
+    username: string;
+    role: "USER" | "ADMIN";
+    is_active: boolean;
+    created_at: string;
+    total_tokens_used: number;
+    total_tools_used: number;
+  }>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+};
+
+type AdminOverviewPayload = {
+  total_users: number;
+  active_users: number;
+  suspended_users: number;
+  total_conversations: number;
+  total_messages: number;
+  total_ai_requests: number;
+  total_tokens_used: number;
+  total_tools_executed: number;
+};
+
+type AdminTokenUsagePayload = {
+  items: Array<{ date: string; tokens: number }>;
+};
+
+type AdminToolUsagePayload = {
+  items: Array<{ tool_name: string; executions: number }>;
+};
+
+type AdminTopUsersPayload = {
+  items: Array<{ user_id: string; username: string; tokens_used: number }>;
+};
+
+type AdminLogsPayload = {
+  items: Array<{
+    id: string;
+    admin_id: string;
+    action: string;
+    target_user_id: string | null;
+    metadata: Record<string, unknown>;
+    created_at: string;
+  }>;
+};
+
+type ProviderHealthPayload = {
+  provider: string;
+  model: string;
+  checked_by_user_id: string;
+  usage: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+  preview: string;
+};
+
 function toMessage(item: { id: string; role: "user" | "assistant"; content: string; created_at: string }): Message {
   return {
     id: item.id,
@@ -341,9 +408,9 @@ export async function fetchAdminToolsFromBackend(): Promise<ToolRead[]> {
 }
 
 export async function setAdminToolActive(toolId: string, isActive: boolean): Promise<ToolRead> {
-  const result = await request<ApiEnvelope<{ tool: ToolRead }>>(`/admin/tools/${toolId}/activate`, {
+  const endpoint = isActive ? "activate" : "deactivate";
+  const result = await request<ApiEnvelope<{ tool: ToolRead }>>(`/admin/tools/${toolId}/${endpoint}`, {
     method: "PATCH",
-    body: JSON.stringify({ is_active: isActive }),
   });
   return result.data.tool;
 }
@@ -392,4 +459,67 @@ export async function deleteAdminTool(toolId: string): Promise<void> {
   await request<ApiEnvelope<Record<string, never>>>(`/admin/tools/${toolId}`, {
     method: "DELETE",
   });
+}
+
+export async function fetchAdminUsersFromBackend(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: "USER" | "ADMIN";
+  status?: "active" | "suspended";
+}): Promise<AdminUsersPayload> {
+  const qp = new URLSearchParams();
+  if (params?.page) qp.set("page", String(params.page));
+  if (params?.limit) qp.set("limit", String(params.limit));
+  if (params?.search) qp.set("search", params.search);
+  if (params?.role) qp.set("role", params.role);
+  if (params?.status) qp.set("status", params.status);
+  const query = qp.toString() ? `?${qp.toString()}` : "";
+  const result = await request<ApiEnvelope<AdminUsersPayload>>(`/admin/users${query}`);
+  return result.data;
+}
+
+export async function setAdminUserStatus(userId: string, isActive: boolean): Promise<void> {
+  const endpoint = isActive ? "activate" : "suspend";
+  await request<ApiEnvelope<Record<string, never>>>(`/admin/users/${userId}/${endpoint}`, {
+    method: "PATCH",
+  });
+}
+
+export async function deleteAdminUser(userId: string): Promise<void> {
+  await request<ApiEnvelope<Record<string, never>>>(`/admin/users/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAdminOverviewFromBackend(): Promise<AdminOverviewPayload> {
+  const result = await request<ApiEnvelope<AdminOverviewPayload>>("/admin/analytics/overview");
+  return result.data;
+}
+
+export async function fetchAdminTokenUsageFromBackend(days = 30): Promise<Array<{ date: string; tokens: number }>> {
+  const result = await request<ApiEnvelope<AdminTokenUsagePayload>>(`/admin/analytics/token-usage?days=${days}`);
+  return result.data.items;
+}
+
+export async function fetchAdminToolUsageFromBackend(): Promise<Array<{ tool_name: string; executions: number }>> {
+  const result = await request<ApiEnvelope<AdminToolUsagePayload>>("/admin/analytics/tool-usage");
+  return result.data.items;
+}
+
+export async function fetchAdminTopUsersFromBackend(limit = 10): Promise<Array<{ user_id: string; username: string; tokens_used: number }>> {
+  const result = await request<ApiEnvelope<AdminTopUsersPayload>>(`/admin/analytics/top-users?limit=${limit}`);
+  return result.data.items;
+}
+
+export async function fetchAdminLogsFromBackend(params?: { page?: number; limit?: number }): Promise<AdminLogsPayload["items"]> {
+  const page = params?.page ?? 1;
+  const limit = params?.limit ?? 20;
+  const result = await request<ApiEnvelope<AdminLogsPayload>>(`/admin/logs?page=${page}&limit=${limit}`);
+  return result.data.items;
+}
+
+export async function fetchProviderHealthFromBackend(): Promise<ProviderHealthPayload> {
+  const result = await request<ApiEnvelope<ProviderHealthPayload>>("/chat/health/provider");
+  return result.data;
 }
