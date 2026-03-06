@@ -1,14 +1,25 @@
 from __future__ import annotations
 
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.conversation import Conversation
+from app.models.message import Message
+from app.models.tool import Tool
+from app.models.tool_usage import ToolUsage
+from app.models.usage_log import UsageLog
+from app.models.user import User
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.usage_repo import UsageRepository
+from app.schemas.admin import AdminOverviewRead, TokenUsageRead, ToolUsageStatsRead, TopUserUsageRead
 from app.schemas.analytics import ActivityRead, DailyUsageRead, UsageStatsRead
 
 
 class AnalyticsService:
-    def __init__(self, usage_repo: UsageRepository, tool_repo: ToolRepository) -> None:
+    def __init__(self, usage_repo: UsageRepository, tool_repo: ToolRepository, db: AsyncSession) -> None:
         self.usage_repo = usage_repo
         self.tool_repo = tool_repo
+        self.db = db
 
     async def get_usage_stats(self, *, user_id) -> UsageStatsRead:
         summary = await self.usage_repo.get_usage_summary(user_id=user_id)
@@ -36,4 +47,94 @@ class AnalyticsService:
                 status="success",
             )
             for row in rows
+        ]
+
+    async def get_admin_overview(self) -> AdminOverviewRead:
+        total_users = await self.db.scalar(
+            select(func.count(User.id)).where(User.is_deleted.is_(False))
+        )
+        active_users = await self.db.scalar(
+            select(func.count(User.id)).where(User.is_deleted.is_(False), User.is_active.is_(True))
+        )
+        suspended_users = await self.db.scalar(
+            select(func.count(User.id)).where(User.is_deleted.is_(False), User.is_active.is_(False))
+        )
+        total_conversations = await self.db.scalar(select(func.count(Conversation.id)))
+        total_messages = await self.db.scalar(select(func.count(Message.id)))
+        ai_agg = await self.db.execute(
+            select(
+                func.count(UsageLog.id).label("requests"),
+                func.coalesce(func.sum(UsageLog.tokens_used), 0).label("tokens"),
+            )
+        )
+        tool_count = await self.db.scalar(select(func.count(ToolUsage.id)))
+
+        row = ai_agg.one()
+        return AdminOverviewRead(
+            total_users=int(total_users or 0),
+            active_users=int(active_users or 0),
+            suspended_users=int(suspended_users or 0),
+            total_conversations=int(total_conversations or 0),
+            total_messages=int(total_messages or 0),
+            total_ai_requests=int(row.requests or 0),
+            total_tokens_used=int(row.tokens or 0),
+            total_tools_executed=int(tool_count or 0),
+        )
+
+    async def get_admin_token_usage(self, *, days: int = 30) -> list[TokenUsageRead]:
+        day_expr = func.date_trunc("day", UsageLog.created_at)
+        result = await self.db.execute(
+            select(
+                day_expr.label("day"),
+                func.coalesce(func.sum(UsageLog.tokens_used), 0).label("tokens"),
+            )
+            .group_by(day_expr)
+            .order_by(day_expr.desc())
+            .limit(days)
+        )
+        rows = list(result.all())
+        rows.reverse()
+        return [
+            TokenUsageRead(
+                date=row.day.strftime("%Y-%m-%d"),
+                tokens=int(row.tokens or 0),
+            )
+            for row in rows
+        ]
+
+    async def get_admin_tool_usage(self) -> list[ToolUsageStatsRead]:
+        result = await self.db.execute(
+            select(
+                Tool.name.label("tool_name"),
+                func.count(ToolUsage.id).label("executions"),
+            )
+            .join(ToolUsage, ToolUsage.tool_id == Tool.id)
+            .group_by(Tool.id)
+            .order_by(func.count(ToolUsage.id).desc())
+        )
+        return [
+            ToolUsageStatsRead(tool_name=row.tool_name, executions=int(row.executions or 0))
+            for row in result.all()
+        ]
+
+    async def get_admin_top_users(self, *, limit: int = 10) -> list[TopUserUsageRead]:
+        result = await self.db.execute(
+            select(
+                User.id.label("user_id"),
+                User.username.label("username"),
+                func.coalesce(func.sum(UsageLog.tokens_used), 0).label("tokens_used"),
+            )
+            .join(UsageLog, UsageLog.user_id == User.id)
+            .where(User.is_deleted.is_(False))
+            .group_by(User.id)
+            .order_by(func.sum(UsageLog.tokens_used).desc())
+            .limit(limit)
+        )
+        return [
+            TopUserUsageRead(
+                user_id=row.user_id,
+                username=row.username,
+                tokens_used=int(row.tokens_used or 0),
+            )
+            for row in result.all()
         ]
