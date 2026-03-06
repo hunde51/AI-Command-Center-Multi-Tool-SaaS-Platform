@@ -18,6 +18,7 @@ def _service(db: AsyncSession) -> AnalyticsService:
     return AnalyticsService(
         usage_repo=UsageRepository(db),
         tool_repo=ToolRepository(db),
+        db=db,
     )
 
 
