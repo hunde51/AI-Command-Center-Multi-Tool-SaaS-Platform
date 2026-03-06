@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loginWithBackend, registerWithBackend } from "@/services/backendApi";
+import { getUserRole, loginWithBackend, registerWithBackend } from "@/services/backendApi";
 
 export default function Login() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -29,11 +29,12 @@ export default function Login() {
         await registerWithBackend({ name, username, email, password });
       }
       await loginWithBackend(email, password);
+      const role = getUserRole();
       toast({
         title: mode === "signup" ? "Account created" : "Welcome back!",
         description: "Redirecting to dashboard...",
       });
-      navigate("/dashboard");
+      navigate(role === "ADMIN" ? "/admin" : "/dashboard");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Authentication failed";
       toast({ title: message, variant: "destructive" });

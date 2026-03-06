@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type AdminUserRow = {
   user_id: string;
@@ -26,11 +27,22 @@ export default function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [role, setRole] = useState<"ALL" | "USER" | "ADMIN">("ALL");
+  const [status, setStatus] = useState<"ALL" | "active" | "suspended">("ALL");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ["admin-users", search],
-    queryFn: () => fetchAdminUsersFromBackend({ page: 1, limit: 100, search: search || undefined }),
+    queryKey: ["admin-users", page, limit, search, role, status],
+    queryFn: () =>
+      fetchAdminUsersFromBackend({
+        page,
+        limit,
+        search: search || undefined,
+        role: role === "ALL" ? undefined : role,
+        status: status === "ALL" ? undefined : status,
+      }),
   });
 
   const mutation = useMutation({
@@ -64,7 +76,64 @@ export default function UserManagement() {
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search users..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input
+            placeholder="Search users..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
+        <div className="w-[140px]">
+          <Select
+            value={role}
+            onValueChange={(v: "ALL" | "USER" | "ADMIN") => {
+              setRole(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger><SelectValue placeholder="Role" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Roles</SelectItem>
+              <SelectItem value="USER">USER</SelectItem>
+              <SelectItem value="ADMIN">ADMIN</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-[160px]">
+          <Select
+            value={status}
+            onValueChange={(v: "ALL" | "active" | "suspended") => {
+              setStatus(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-[120px]">
+          <Select
+            value={String(limit)}
+            onValueChange={(v) => {
+              setLimit(Number(v));
+              setPage(1);
+            }}
+          >
+            <SelectTrigger><SelectValue placeholder="Limit" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -129,6 +198,29 @@ export default function UserManagement() {
           )}
         </CardContent>
       </Card>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Page {usersData?.pagination.page ?? 1} of {usersData?.pagination.total_pages ?? 1}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!usersData?.pagination.has_prev}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!usersData?.pagination.has_next}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

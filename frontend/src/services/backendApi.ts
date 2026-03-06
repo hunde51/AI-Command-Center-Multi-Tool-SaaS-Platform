@@ -5,6 +5,7 @@ const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_EMAIL_KEY = "user_email";
 const USER_NAME_KEY = "user_name";
+const USER_ROLE_KEY = "user_role";
 
 class ApiError extends Error {
   status: number;
@@ -17,6 +18,10 @@ class ApiError extends Error {
 
 function getToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function hasAccessToken(): boolean {
+  return Boolean(getToken());
 }
 
 function setTokens(accessToken: string, refreshToken: string): void {
@@ -32,6 +37,10 @@ function setUserName(name: string): void {
   localStorage.setItem(USER_NAME_KEY, name);
 }
 
+function setUserRole(role: string): void {
+  localStorage.setItem(USER_ROLE_KEY, role);
+}
+
 export function getUserEmail(): string | null {
   return localStorage.getItem(USER_EMAIL_KEY);
 }
@@ -40,11 +49,16 @@ export function getUserName(): string | null {
   return localStorage.getItem(USER_NAME_KEY);
 }
 
+export function getUserRole(): string | null {
+  return localStorage.getItem(USER_ROLE_KEY);
+}
+
 export function clearTokens(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_EMAIL_KEY);
   localStorage.removeItem(USER_NAME_KEY);
+  localStorage.removeItem(USER_ROLE_KEY);
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -268,6 +282,14 @@ type AdminLogsPayload = {
     metadata: Record<string, unknown>;
     created_at: string;
   }>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
 };
 
 type ProviderHealthPayload = {
@@ -318,6 +340,8 @@ export async function loginWithBackend(email: string, password: string): Promise
 
   setTokens(result.access_token, result.refresh_token);
   setUserEmail(email);
+  const dashboard = await request<ApiEnvelope<DashboardResponse>>("/dashboard");
+  setUserRole(dashboard.data.role);
 }
 
 export async function fetchDashboardStatus(): Promise<DashboardResponse> {
@@ -512,11 +536,21 @@ export async function fetchAdminTopUsersFromBackend(limit = 10): Promise<Array<{
   return result.data.items;
 }
 
-export async function fetchAdminLogsFromBackend(params?: { page?: number; limit?: number }): Promise<AdminLogsPayload["items"]> {
-  const page = params?.page ?? 1;
-  const limit = params?.limit ?? 20;
-  const result = await request<ApiEnvelope<AdminLogsPayload>>(`/admin/logs?page=${page}&limit=${limit}`);
-  return result.data.items;
+export async function fetchAdminLogsFromBackend(params?: {
+  page?: number;
+  limit?: number;
+  action?: string;
+  adminId?: string;
+  targetUserId?: string;
+}): Promise<AdminLogsPayload> {
+  const qp = new URLSearchParams();
+  qp.set("page", String(params?.page ?? 1));
+  qp.set("limit", String(params?.limit ?? 20));
+  if (params?.action) qp.set("action", params.action);
+  if (params?.adminId) qp.set("admin_id", params.adminId);
+  if (params?.targetUserId) qp.set("target_user_id", params.targetUserId);
+  const result = await request<ApiEnvelope<AdminLogsPayload>>(`/admin/logs?${qp.toString()}`);
+  return result.data;
 }
 
 export async function fetchProviderHealthFromBackend(): Promise<ProviderHealthPayload> {
