@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
+from app.services.admin_service import AdminServiceError
 from app.services.auth_service import AuthError
 from app.services.chat_service import ChatError
 from app.services.tool_service import ToolServiceError
@@ -44,6 +45,14 @@ async def chat_error_handler(_: Request, exc: ChatError) -> JSONResponse:
 
 @app.exception_handler(ToolServiceError)
 async def tool_service_error_handler(_: Request, exc: ToolServiceError) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=api_response(False, exc.message, {}),
+    )
+
+
+@app.exception_handler(AdminServiceError)
+async def admin_service_error_handler(_: Request, exc: AdminServiceError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content=api_response(False, exc.message, {}),
