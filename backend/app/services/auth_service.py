@@ -21,8 +21,8 @@ class AuthService:
         self.user_repo = user_repo
 
     async def register_user(self, payload: UserCreate) -> User:
-        existing_email = await self.user_repo.get_user_by_email(payload.email)
-        existing_username = await self.user_repo.get_user_by_username(payload.username)
+        existing_email = await self.user_repo.get_user_by_email(payload.email, include_deleted=True)
+        existing_username = await self.user_repo.get_user_by_username(payload.username, include_deleted=True)
         if existing_email or existing_username:
             raise AuthError("Unable to process registration request")
 

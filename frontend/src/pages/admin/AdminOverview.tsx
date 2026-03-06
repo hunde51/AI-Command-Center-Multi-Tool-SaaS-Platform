@@ -1,23 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchAdminUsers, fetchSystemMetrics, fetchAdminDailyUsage } from "@/services/adminMockApi";
+import { fetchAdminOverviewFromBackend, fetchAdminTokenUsageFromBackend } from "@/services/backendApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Activity, Zap, AlertTriangle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function AdminOverview() {
-  const { data: users, isLoading: loadingUsers } = useQuery({ queryKey: ["admin-users"], queryFn: fetchAdminUsers });
-  const { data: metrics, isLoading: loadingMetrics } = useQuery({ queryKey: ["system-metrics"], queryFn: fetchSystemMetrics });
-  const { data: usage, isLoading: loadingUsage } = useQuery({ queryKey: ["admin-daily-usage"], queryFn: fetchAdminDailyUsage });
-
-  const activeUsers = users?.filter(u => u.status === "active").length ?? 0;
-  const totalTokens = users?.reduce((sum, u) => sum + u.tokensUsed, 0) ?? 0;
+  const { data: overview, isLoading: loadingOverview } = useQuery({ queryKey: ["admin-overview"], queryFn: fetchAdminOverviewFromBackend });
+  const { data: usage, isLoading: loadingUsage } = useQuery({ queryKey: ["admin-token-usage"], queryFn: () => fetchAdminTokenUsageFromBackend(7) });
 
   const summaryCards = [
-    { label: "Total Users", value: users?.length ?? 0, icon: Users, color: "text-primary" },
-    { label: "Active Users", value: activeUsers, icon: Activity, color: "text-emerald-500" },
-    { label: "Total Tokens Used", value: `${(totalTokens / 1000).toFixed(0)}K`, icon: Zap, color: "text-accent" },
-    { label: "Warnings", value: metrics?.filter(m => m.status !== "healthy").length ?? 0, icon: AlertTriangle, color: "text-yellow-500" },
+    { label: "Total Users", value: overview?.total_users ?? 0, icon: Users, color: "text-primary" },
+    { label: "Active Users", value: overview?.active_users ?? 0, icon: Activity, color: "text-emerald-500" },
+    { label: "Total Tokens Used", value: `${((overview?.total_tokens_used ?? 0) / 1000).toFixed(0)}K`, icon: Zap, color: "text-accent" },
+    { label: "Suspended Users", value: overview?.suspended_users ?? 0, icon: AlertTriangle, color: "text-yellow-500" },
   ];
 
   return (
@@ -31,7 +27,7 @@ export default function AdminOverview() {
         {summaryCards.map((card) => (
           <Card key={card.label} className="border-transparent card-elevated">
             <CardContent className="p-5">
-              {loadingUsers || loadingMetrics ? (
+              {loadingOverview ? (
                 <Skeleton className="h-16 w-full" />
               ) : (
                 <div className="flex items-center gap-3">
