@@ -23,6 +23,7 @@ class User(Base):
         Enum(UserRole, name="user_role"), nullable=False, default=UserRole.USER
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -46,4 +47,8 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
-    __table_args__ = (Index("ix_users_email_username", "email", "username"),)
+    __table_args__ = (
+        Index("ix_users_email_username", "email", "username"),
+        Index("ix_users_is_deleted", "is_deleted"),
+        Index("ix_users_created_at", "created_at"),
+    )
