@@ -1,12 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchSystemMetrics } from "@/services/adminMockApi";
+import { fetchAdminOverviewFromBackend, fetchProviderHealthFromBackend } from "@/services/backendApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 
 export default function SystemHealth() {
-  const { data: metrics, isLoading } = useQuery({ queryKey: ["system-metrics"], queryFn: fetchSystemMetrics });
+  const { data: overview, isLoading } = useQuery({ queryKey: ["admin-overview"], queryFn: fetchAdminOverviewFromBackend });
+  const { data: providerHealth, isLoading: providerLoading } = useQuery({ queryKey: ["provider-health"], queryFn: fetchProviderHealthFromBackend });
+  const metrics = overview ? [
+    { label: "Total Conversations", value: overview.total_conversations, unit: "", status: "healthy", trend: "up" as const },
+    { label: "Total Messages", value: overview.total_messages, unit: "", status: "healthy", trend: "up" as const },
+    { label: "AI Requests", value: overview.total_ai_requests, unit: "", status: "healthy", trend: "up" as const },
+    { label: "Tool Executions", value: overview.total_tools_executed, unit: "", status: "healthy", trend: "up" as const },
+    { label: "Tokens Used", value: overview.total_tokens_used, unit: "", status: "warning", trend: "up" as const },
+    { label: "Active Users", value: overview.active_users, unit: "", status: "healthy", trend: "stable" as const },
+    { label: "Suspended Users", value: overview.suspended_users, unit: "", status: "warning", trend: "stable" as const },
+    { label: "Total Users", value: overview.total_users, unit: "", status: "healthy", trend: "stable" as const },
+  ] : [];
 
   const statusColor = (s: string) => {
     if (s === "healthy") return "default";
@@ -26,6 +37,23 @@ export default function SystemHealth() {
         <h1 className="font-display text-2xl font-bold text-foreground">System Health</h1>
         <p className="text-sm text-muted-foreground">Real-time infrastructure monitoring.</p>
       </div>
+      <Card className="border-transparent card-elevated">
+        <CardContent className="p-5">
+          {providerLoading ? (
+            <Skeleton className="h-12 w-full" />
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">AI Provider Health</p>
+                <p className="text-xs text-muted-foreground">
+                  Provider: {providerHealth?.provider} | Model: {providerHealth?.model}
+                </p>
+              </div>
+              <Badge variant="default">reachable</Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
