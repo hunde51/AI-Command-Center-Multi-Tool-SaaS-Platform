@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Routes, Route } from "react-router-dom";
 import PublicLayout from "@/components/layouts/PublicLayout";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -23,8 +23,20 @@ import SystemHealth from "@/pages/admin/SystemHealth";
 import FeatureFlags from "@/pages/admin/FeatureFlags";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import NotFound from "@/pages/NotFound";
+import { getUserRole, hasAccessToken } from "@/services/backendApi";
 
 const queryClient = new QueryClient();
+
+function RequireAuth() {
+  return hasAccessToken() ? <Outlet /> : <Navigate to="/login" replace />;
+}
+
+function RequireAdmin() {
+  if (!hasAccessToken()) {
+    return <Navigate to="/login" replace />;
+  }
+  return getUserRole() === "ADMIN" ? <Outlet /> : <Navigate to="/dashboard" replace />;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -42,23 +54,27 @@ const App = () => (
           <Route path="/login" element={<Login />} />
 
           {/* Dashboard routes */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="chat" element={<AIChat />} />
-            <Route path="tools" element={<AITools />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="settings" element={<DashboardSettings />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="chat" element={<AIChat />} />
+              <Route path="tools" element={<AITools />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="settings" element={<DashboardSettings />} />
+            </Route>
           </Route>
 
           {/* Admin routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminOverview />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="logs" element={<UsageLogs />} />
-            <Route path="tools" element={<ToolManagement />} />
-            <Route path="health" element={<SystemHealth />} />
-            <Route path="flags" element={<FeatureFlags />} />
-            <Route path="analytics" element={<AdminAnalytics />} />
+          <Route element={<RequireAdmin />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverview />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="logs" element={<UsageLogs />} />
+              <Route path="tools" element={<ToolManagement />} />
+              <Route path="health" element={<SystemHealth />} />
+              <Route path="flags" element={<FeatureFlags />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />
