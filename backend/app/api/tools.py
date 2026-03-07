@@ -8,13 +8,14 @@ from app.ai_engine.model_selector import ModelSelector
 from app.ai_engine.provider_factory import get_ai_provider
 from app.api.deps import get_current_active_user
 from app.db.session import get_db
+from app.models.role import UserRole
 from app.models.user import User
 from app.repositories.provider_credential_repo import ProviderCredentialRepository
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.usage_repo import UsageRepository
 from app.schemas.tool import ToolExecuteRequest
 from app.services.provider_key_service import ProviderKeyService
-from app.services.tool_service import ToolService
+from app.services.tool_service import ToolService, ToolServiceError
 from app.utils.response_wrapper import api_response
 
 router = APIRouter(prefix="/tools", tags=["tools"])
@@ -38,11 +39,20 @@ async def execute_tool(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    result = await _service(db).execute_tool(
-        slug=slug,
-        user_input=payload.input,
-        user_id=current_user.id,
-    )
+    try:
+        result = await _service(db).execute_tool(
+            slug=slug,
+            user_input=payload.input,
+            user_id=current_user.id,
+        )
+    except ToolServiceError as exc:
+        # Keep provider/configuration details for admins only.
+        if exc.status_code >= 500 and current_user.role != UserRole.ADMIN:
+            raise ToolServiceError(
+                "Tool is temporarily unavailable. Please try again later.",
+                exc.status_code,
+            ) from exc
+        raise
     return api_response(True, "Tool executed successfully", result.model_dump())
 
 
