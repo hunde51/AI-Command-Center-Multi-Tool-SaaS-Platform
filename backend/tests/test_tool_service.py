@@ -19,7 +19,10 @@ class DummyTool:
     slug: str
     description: str
     system_prompt_template: str
+    model_name: str
     input_schema: dict
+    admin_locked: bool
+    created_by_user_id: uuid.UUID | None
     is_active: bool
     version: int
     created_at: datetime
@@ -78,8 +81,9 @@ class DummyUsageRepo:
 
 
 class DummyProvider(AIProvider):
-    async def generate_response(self, *, model: str, prompt: str, messages=None) -> dict:
+    async def generate_response(self, *, model: str, prompt: str, messages=None, api_key=None) -> dict:
         _ = messages
+        _ = api_key
         return {
             "content": f"Result for: {prompt[:20]}",
             "model_used": model,
@@ -101,12 +105,45 @@ def _build_tool(*, is_active: bool = True, input_schema: dict | None = None) -> 
         slug="resume-analyzer",
         description="desc",
         system_prompt_template="Analyze:\n\n{{input}}",
+        model_name="gemini-2.5-flash",
         input_schema=input_schema or {},
+        admin_locked=False,
+        created_by_user_id=uuid.uuid4(),
         is_active=is_active,
         version=1,
         created_at=now,
         updated_at=now,
     )
+
+
+def test_render_prompt_replaces_common_input_placeholders() -> None:
+    service = ToolService(
+        tool_repo=DummyToolRepo(None),
+        usage_repo=DummyUsageRepo(),
+        provider=DummyProvider(),
+        model_selector=ModelSelector(),
+        cost_calculator=CostCalculator(),
+    )
+
+    rendered_jinja = service._render_prompt(template="Do this: {{ input }}", user_input="hello")
+    rendered_braces = service._render_prompt(template="Do this: {input}", user_input="hello")
+
+    assert rendered_jinja == "Do this: hello"
+    assert rendered_braces == "Do this: hello"
+
+
+def test_render_prompt_appends_input_when_placeholder_missing() -> None:
+    service = ToolService(
+        tool_repo=DummyToolRepo(None),
+        usage_repo=DummyUsageRepo(),
+        provider=DummyProvider(),
+        model_selector=ModelSelector(),
+        cost_calculator=CostCalculator(),
+    )
+
+    rendered = service._render_prompt(template="You are a code analyzer.", user_input="print hello")
+
+    assert rendered == "You are a code analyzer.\n\nprint hello"
 
 
 @pytest.mark.asyncio
