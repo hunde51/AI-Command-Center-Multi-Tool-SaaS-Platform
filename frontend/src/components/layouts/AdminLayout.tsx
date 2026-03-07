@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -13,14 +13,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
-import { Users, FileText, Wrench, Activity, ToggleRight, BarChart3, Shield, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Users, FileText, Wrench, Activity, ToggleRight, BarChart3, Shield, KeyRound } from "lucide-react";
 
 const adminNavItems = [
   { title: "Overview", url: "/admin", icon: Activity },
   { title: "User Management", url: "/admin/users", icon: Users },
   { title: "Usage Logs", url: "/admin/logs", icon: FileText },
   { title: "Tool Management", url: "/admin/tools", icon: Wrench },
+  { title: "Provider Keys", url: "/admin/provider-keys", icon: KeyRound },
   { title: "System Health", url: "/admin/health", icon: Activity },
   { title: "Feature Flags", url: "/admin/flags", icon: ToggleRight },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
@@ -64,16 +64,7 @@ function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <div className="mt-auto p-4">
-        {!collapsed && (
-          <Button variant="ghost" size="sm" className="w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground" asChild>
-            <Link to="/dashboard">
-              <LogOut className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Link>
-          </Button>
-        )}
-      </div>
+      <div className="mt-auto p-4" />
     </Sidebar>
   );
 }
@@ -89,9 +80,7 @@ export default function AdminLayout() {
               <SidebarTrigger />
               <span className="text-sm font-medium text-destructive">Admin Panel</span>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/dashboard">Exit Admin</Link>
-            </Button>
+            <div />
           </header>
           <main className="flex-1 overflow-auto p-6">
             <Outlet />

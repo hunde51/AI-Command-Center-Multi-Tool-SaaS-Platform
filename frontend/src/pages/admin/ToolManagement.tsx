@@ -24,6 +24,9 @@ type BackendTool = {
   slug: string;
   description: string;
   system_prompt_template: string;
+  model_name: string;
+  admin_locked: boolean;
+  created_by_user_id: string | null;
   is_active: boolean;
   version: number;
 };
@@ -40,6 +43,8 @@ export default function ToolManagement() {
     slug: "",
     description: "",
     system_prompt_template: "",
+    model_name: "gemini-2.5-flash",
+    admin_locked: false,
     version: 1,
   });
   const { data: tools, isLoading } = useQuery({ queryKey: ["admin-tools"], queryFn: fetchAdminToolsFromBackend });
@@ -64,7 +69,15 @@ export default function ToolManagement() {
       }),
     onSuccess: async () => {
       setCreateOpen(false);
-      setForm({ name: "", slug: "", description: "", system_prompt_template: "", version: 1 });
+      setForm({
+        name: "",
+        slug: "",
+        description: "",
+        system_prompt_template: "",
+        model_name: "gemini-2.5-flash",
+        admin_locked: false,
+        version: 1,
+      });
       await queryClient.invalidateQueries({ queryKey: ["admin-tools"] });
       toast({ title: "Tool created" });
     },
@@ -111,6 +124,8 @@ export default function ToolManagement() {
       slug: tool.slug,
       description: tool.description,
       system_prompt_template: tool.system_prompt_template,
+      model_name: tool.model_name,
+      admin_locked: tool.admin_locked,
       version: tool.version,
     });
     setEditOpen(true);
@@ -140,6 +155,8 @@ export default function ToolManagement() {
                   <p className="text-sm text-muted-foreground mb-2">{tool.description}</p>
                   <div className="flex gap-4 text-xs text-muted-foreground">
                     <span>Version {tool.version}</span>
+                    <span>Model {tool.model_name}</span>
+                    {tool.admin_locked ? <span>Admin Locked</span> : null}
                   </div>
                 </div>
                 <Switch
@@ -173,6 +190,15 @@ export default function ToolManagement() {
           <Input placeholder="Slug" value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} />
           <Input placeholder="Description" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           <Textarea placeholder="System prompt template (use {{input}})" value={form.system_prompt_template} onChange={(e) => setForm((f) => ({ ...f, system_prompt_template: e.target.value }))} />
+          <Input
+            placeholder="Model name (e.g. gemini-2.5-flash)"
+            value={form.model_name}
+            onChange={(e) => setForm((f) => ({ ...f, model_name: e.target.value }))}
+          />
+          <div className="flex items-center justify-between rounded-md border px-3 py-2">
+            <span className="text-sm text-muted-foreground">Admin lock tool</span>
+            <Switch checked={form.admin_locked} onCheckedChange={(v) => setForm((f) => ({ ...f, admin_locked: v }))} />
+          </div>
           <Input type="number" min={1} value={form.version} onChange={(e) => setForm((f) => ({ ...f, version: Number(e.target.value) || 1 }))} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
@@ -188,6 +214,15 @@ export default function ToolManagement() {
           <Input placeholder="Slug" value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} />
           <Input placeholder="Description" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           <Textarea placeholder="System prompt template" value={form.system_prompt_template} onChange={(e) => setForm((f) => ({ ...f, system_prompt_template: e.target.value }))} />
+          <Input
+            placeholder="Model name (e.g. gemini-2.5-flash)"
+            value={form.model_name}
+            onChange={(e) => setForm((f) => ({ ...f, model_name: e.target.value }))}
+          />
+          <div className="flex items-center justify-between rounded-md border px-3 py-2">
+            <span className="text-sm text-muted-foreground">Admin lock tool</span>
+            <Switch checked={form.admin_locked} onCheckedChange={(v) => setForm((f) => ({ ...f, admin_locked: v }))} />
+          </div>
           <Input type="number" min={1} value={form.version} onChange={(e) => setForm((f) => ({ ...f, version: Number(e.target.value) || 1 }))} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
