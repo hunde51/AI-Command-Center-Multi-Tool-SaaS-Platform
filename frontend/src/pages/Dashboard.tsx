@@ -94,7 +94,7 @@ export default function Dashboard() {
             </div>
           ) : activities ? (
             <div className="space-y-3">
-              {activities.map((a) => (
+              {activities.slice(0, 10).map((a) => (
                 <div key={a.id} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-card-foreground truncate">{a.action}</p>

@@ -43,7 +43,7 @@ async def daily_usage(
 
 @router.get("/activities")
 async def activities(
-    limit: int = Query(default=10, ge=1, le=50),
+    limit: int = Query(default=10, ge=1, le=10),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
