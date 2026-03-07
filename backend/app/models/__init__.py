@@ -6,3 +6,4 @@ from app.models.usage_log import *  # noqa: F401,F403
 from app.models.tool import *  # noqa: F401,F403
 from app.models.tool_usage import *  # noqa: F401,F403
 from app.models.admin_log import *  # noqa: F401,F403
+from app.models.provider_credential import *  # noqa: F401,F403
