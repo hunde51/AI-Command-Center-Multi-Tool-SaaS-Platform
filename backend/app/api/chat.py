@@ -13,10 +13,12 @@ from app.db.session import get_db
 from app.models.user import User
 from app.repositories.chat_repo import ChatRepository
 from app.repositories.provider_credential_repo import ProviderCredentialRepository
+from app.repositories.subscription_repo import SubscriptionRepository
 from app.repositories.usage_repo import UsageRepository
 from app.schemas.chat import ChatRequest, ConversationRenameRequest
 from app.services.provider_key_service import ProviderKeyService
 from app.services.chat_service import ChatService
+from app.services.quota_service import QuotaService
 from app.utils.response_wrapper import api_response
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -35,6 +37,7 @@ async def chat(
         model_selector=ModelSelector(),
         token_tracker=TokenTracker(UsageRepository(db)),
         provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
+        quota_service=QuotaService(SubscriptionRepository(db)),
     )
     result = await service.send_message(
         current_user=current_user,
@@ -79,6 +82,7 @@ async def list_conversations(
         model_selector=ModelSelector(),
         token_tracker=TokenTracker(UsageRepository(db)),
         provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
+        quota_service=QuotaService(SubscriptionRepository(db)),
     )
     rows = await service.get_user_conversations(current_user=current_user)
     return api_response(True, "Conversations fetched", {"conversations": [r.model_dump() for r in rows]})
@@ -96,6 +100,7 @@ async def get_conversation(
         model_selector=ModelSelector(),
         token_tracker=TokenTracker(UsageRepository(db)),
         provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
+        quota_service=QuotaService(SubscriptionRepository(db)),
     )
     result = await service.get_conversation_history(
         current_user=current_user,
@@ -117,6 +122,7 @@ async def rename_conversation(
         model_selector=ModelSelector(),
         token_tracker=TokenTracker(UsageRepository(db)),
         provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
+        quota_service=QuotaService(SubscriptionRepository(db)),
     )
     updated = await service.rename_conversation(
         current_user=current_user,
@@ -138,6 +144,7 @@ async def delete_conversation(
         model_selector=ModelSelector(),
         token_tracker=TokenTracker(UsageRepository(db)),
         provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
+        quota_service=QuotaService(SubscriptionRepository(db)),
     )
     await service.delete_conversation(current_user=current_user, conversation_id=conversation_id)
     return api_response(True, "Conversation deleted", {})

@@ -11,10 +11,12 @@ from app.db.session import get_db
 from app.models.role import UserRole
 from app.models.user import User
 from app.repositories.provider_credential_repo import ProviderCredentialRepository
+from app.repositories.subscription_repo import SubscriptionRepository
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.usage_repo import UsageRepository
 from app.schemas.tool import ToolExecuteRequest
 from app.services.provider_key_service import ProviderKeyService
+from app.services.quota_service import QuotaService
 from app.services.tool_service import ToolService, ToolServiceError
 from app.utils.response_wrapper import api_response
 
@@ -29,6 +31,7 @@ def _service(db: AsyncSession) -> ToolService:
         model_selector=ModelSelector(),
         cost_calculator=CostCalculator(),
         provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
+        quota_service=QuotaService(SubscriptionRepository(db)),
     )
 
 
