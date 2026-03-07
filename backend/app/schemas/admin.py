@@ -54,3 +54,15 @@ class TopUserUsageRead(BaseModel):
     user_id: UUID
     username: str
     tokens_used: int
+
+
+class ProviderKeyUpsertRequest(BaseModel):
+    provider: str
+    api_key: str
+    reason: str | None = None
+
+
+class ProviderKeyRead(BaseModel):
+    provider: str
+    masked_api_key: str | None
+    has_database_key: bool
