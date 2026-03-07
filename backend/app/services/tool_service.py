@@ -10,6 +10,7 @@ from app.ai_engine.model_selector import ModelSelector
 from app.ai_engine.response_cleaner import clean_assistant_text
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.usage_repo import UsageRepository
+from app.services.provider_key_service import ProviderKeyService
 from app.schemas.tool import ToolExecutionRead, ToolRead, ToolUsageRead
 
 
@@ -29,12 +30,14 @@ class ToolService:
         provider: AIProvider,
         model_selector: ModelSelector,
         cost_calculator: CostCalculator,
+        provider_key_service: ProviderKeyService | None = None,
     ) -> None:
         self.tool_repo = tool_repo
         self.usage_repo = usage_repo
         self.provider = provider
         self.model_selector = model_selector
         self.cost_calculator = cost_calculator
+        self.provider_key_service = provider_key_service
 
     async def execute_tool(self, slug: str, user_input: str, user_id: UUID) -> ToolExecutionRead:
         tool = await self.tool_repo.get_tool_by_slug(slug=slug)
@@ -48,12 +51,17 @@ class ToolService:
             template=tool.system_prompt_template,
             user_input=user_input,
         )
-        model_name = self.model_selector.select_for_plan(None)
+        model_name = tool.model_name or self.model_selector.select_for_plan(None)
+        api_key = None
+        if self.provider_key_service is not None:
+            provider_name = self.provider.__class__.__name__.replace("Provider", "").lower()
+            api_key = await self.provider_key_service.resolve_api_key(provider=provider_name)
         try:
             ai_result = await self.provider.generate_response(
                 model=model_name,
                 prompt=rendered_prompt,
                 messages=[{"role": "user", "content": rendered_prompt}],
+                api_key=api_key,
             )
         except AIProviderError as exc:
             await self.tool_repo.db.rollback()
@@ -118,20 +126,28 @@ class ToolService:
         slug: str,
         description: str,
         system_prompt_template: str,
+        model_name: str,
         input_schema: dict,
+        admin_locked: bool,
         is_active: bool,
         version: int,
+        created_by_user_id: UUID,
+        actor_role: str,
     ) -> ToolRead:
         existing = await self.tool_repo.get_tool_by_slug(slug=slug)
         if existing:
             raise ToolServiceError("Tool slug already exists", status.HTTP_409_CONFLICT)
+        self._validate_model_access(model_name=model_name, actor_role=actor_role)
 
         tool = await self.tool_repo.create_tool(
             name=name.strip(),
             slug=slug.strip(),
             description=description.strip(),
             system_prompt_template=system_prompt_template.strip(),
+            model_name=model_name.strip(),
             input_schema=input_schema,
+            admin_locked=admin_locked,
+            created_by_user_id=created_by_user_id,
             is_active=is_active,
             version=version,
         )
@@ -147,17 +163,27 @@ class ToolService:
         slug: str,
         description: str,
         system_prompt_template: str,
+        model_name: str,
         input_schema: dict,
+        admin_locked: bool,
         is_active: bool,
         version: int,
+        actor_id: UUID,
+        actor_role: str,
     ) -> ToolRead:
         tool = await self.tool_repo.get_tool_by_id(tool_id=tool_id)
         if not tool:
             raise ToolServiceError("Tool not found", status.HTTP_404_NOT_FOUND)
+        if actor_role != "ADMIN":
+            if tool.admin_locked:
+                raise ToolServiceError("Tool is admin-locked", status.HTTP_403_FORBIDDEN)
+            if tool.created_by_user_id != actor_id:
+                raise ToolServiceError("Not allowed to modify this tool", status.HTTP_403_FORBIDDEN)
 
         other = await self.tool_repo.get_tool_by_slug(slug=slug)
         if other and other.id != tool.id:
             raise ToolServiceError("Tool slug already exists", status.HTTP_409_CONFLICT)
+        self._validate_model_access(model_name=model_name, actor_role=actor_role)
 
         tool = await self.tool_repo.update_tool(
             tool=tool,
@@ -165,7 +191,9 @@ class ToolService:
             slug=slug.strip(),
             description=description.strip(),
             system_prompt_template=system_prompt_template.strip(),
+            model_name=model_name.strip(),
             input_schema=input_schema,
+            admin_locked=admin_locked,
             is_active=is_active,
             version=version,
         )
@@ -190,7 +218,13 @@ class ToolService:
         return ToolRead.model_validate(tool)
 
     def _render_prompt(self, *, template: str, user_input: str) -> str:
-        return template.replace("{{input}}", user_input.strip())
+        cleaned_input = user_input.strip()
+        # Accept common placeholder variants used in admin-authored templates.
+        placeholder_pattern = re.compile(r"\{\{\s*input\s*\}\}|\{input\}", re.IGNORECASE)
+        if placeholder_pattern.search(template):
+            return placeholder_pattern.sub(cleaned_input, template)
+        # Fallback: always include user input even when template is missing a placeholder.
+        return f"{template.rstrip()}\n\n{cleaned_input}"
 
     def _validate_input(self, *, user_input: str, input_schema: dict) -> None:
         expected_type = input_schema.get("type", "string")
@@ -229,3 +263,10 @@ class ToolService:
                     )
             except re.error as exc:
                 raise ToolServiceError("Invalid input schema pattern", status.HTTP_400_BAD_REQUEST) from exc
+
+    def _validate_model_access(self, *, model_name: str, actor_role: str) -> None:
+        if not self.model_selector.is_model_allowed_for_role(model_name=model_name, role=actor_role):
+            raise ToolServiceError(
+                "Selected model is not allowed for your role",
+                status.HTTP_403_FORBIDDEN,
+            )

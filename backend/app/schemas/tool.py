@@ -24,7 +24,9 @@ class ToolCreateRequest(BaseModel):
     slug: str = Field(min_length=2, max_length=80)
     description: str = Field(min_length=1, max_length=500)
     system_prompt_template: str = Field(min_length=1)
+    model_name: str = Field(min_length=2, max_length=120)
     input_schema: dict[str, Any] = Field(default_factory=dict)
+    admin_locked: bool = False
     is_active: bool = True
     version: int = Field(default=1, ge=1)
 
@@ -34,7 +36,9 @@ class ToolUpdateRequest(BaseModel):
     slug: str = Field(min_length=2, max_length=80)
     description: str = Field(min_length=1, max_length=500)
     system_prompt_template: str = Field(min_length=1)
+    model_name: str = Field(min_length=2, max_length=120)
     input_schema: dict[str, Any] = Field(default_factory=dict)
+    admin_locked: bool = False
     is_active: bool = True
     version: int = Field(ge=1)
 
@@ -51,7 +55,10 @@ class ToolRead(BaseModel):
     slug: str
     description: str
     system_prompt_template: str
+    model_name: str
     input_schema: dict[str, Any]
+    admin_locked: bool
+    created_by_user_id: UUID | None
     is_active: bool
     version: int
     created_at: datetime

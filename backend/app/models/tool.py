@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Index, Integer, JSON, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, JSON, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +20,11 @@ class Tool(Base):
     description: Mapped[str] = mapped_column(String(500), nullable=False, default="")
     system_prompt_template: Mapped[str] = mapped_column(Text, nullable=False)
     input_schema: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    model_name: Mapped[str] = mapped_column(String(120), nullable=False, default="gemini-2.5-flash")
+    admin_locked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(
@@ -34,5 +39,9 @@ class Tool(Base):
         back_populates="tool",
         cascade="all, delete-orphan",
     )
+    created_by_user = relationship("User")
 
-    __table_args__ = (Index("ix_tools_slug", "slug"),)
+    __table_args__ = (
+        Index("ix_tools_slug", "slug"),
+        Index("ix_tools_created_by_user_id", "created_by_user_id"),
+    )
