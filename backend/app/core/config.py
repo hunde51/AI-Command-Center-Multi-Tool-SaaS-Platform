@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     default_model_name: str = "gemini-3-flash"
     max_tokens_limit: int = 800
+    redis_url: str = "redis://localhost:6379/0"
+    celery_broker_url: str | None = None
+    celery_result_backend: str | None = None
+    upload_storage_dir: str = "./storage/uploads"
+    max_upload_size_mb: int = 10
+    rate_limit_per_minute: int = 120
+    rate_limit_window_seconds: int = 60
 
     @model_validator(mode="after")
     def build_database_url(self) -> "Settings":
@@ -52,6 +59,10 @@ class Settings(BaseSettings):
                 )
         else:
             raise ValueError("AI_PROVIDER must be either 'openai' or 'gemini'.")
+        if not self.celery_broker_url:
+            self.celery_broker_url = self.redis_url
+        if not self.celery_result_backend:
+            self.celery_result_backend = self.redis_url
         return self
 
 
