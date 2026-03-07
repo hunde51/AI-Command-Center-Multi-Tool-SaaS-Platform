@@ -146,7 +146,10 @@ type ToolRead = {
   slug: string;
   description: string;
   system_prompt_template: string;
+  model_name: string;
   input_schema: Record<string, unknown>;
+  admin_locked: boolean;
+  created_by_user_id: string | null;
   is_active: boolean;
   version: number;
   created_at: string;
@@ -304,6 +307,12 @@ type ProviderHealthPayload = {
   preview: string;
 };
 
+type ProviderKeyReadPayload = {
+  provider: string;
+  masked_api_key: string | null;
+  has_database_key: boolean;
+};
+
 function toMessage(item: { id: string; role: "user" | "assistant"; content: string; created_at: string }): Message {
   return {
     id: item.id,
@@ -449,7 +458,9 @@ export async function createAdminTool(payload: {
   slug: string;
   description: string;
   system_prompt_template: string;
+  model_name: string;
   input_schema: Record<string, unknown>;
+  admin_locked: boolean;
   is_active: boolean;
   version: number;
 }): Promise<ToolRead> {
@@ -467,7 +478,9 @@ export async function updateAdminTool(
     slug: string;
     description: string;
     system_prompt_template: string;
+    model_name: string;
     input_schema: Record<string, unknown>;
+    admin_locked: boolean;
     is_active: boolean;
     version: number;
   },
@@ -556,4 +569,24 @@ export async function fetchAdminLogsFromBackend(params?: {
 export async function fetchProviderHealthFromBackend(): Promise<ProviderHealthPayload> {
   const result = await request<ApiEnvelope<ProviderHealthPayload>>("/chat/health/provider");
   return result.data;
+}
+
+export async function fetchAdminProviderKey(provider: "gemini" | "openai"): Promise<ProviderKeyReadPayload> {
+  const result = await request<ApiEnvelope<ProviderKeyReadPayload>>(`/admin/provider-keys/${provider}`);
+  return result.data;
+}
+
+export async function upsertAdminProviderKey(params: {
+  provider: "gemini" | "openai";
+  api_key: string;
+  reason?: string;
+}): Promise<void> {
+  await request<ApiEnvelope<{ provider: string }>>(`/admin/provider-keys/${params.provider}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      provider: params.provider,
+      api_key: params.api_key,
+      reason: params.reason ?? null,
+    }),
+  });
 }

@@ -10,6 +10,7 @@ from app.ai_engine.response_cleaner import clean_assistant_text
 from app.ai_engine.token_tracker import TokenTracker
 from app.models.user import User
 from app.repositories.chat_repo import ChatRepository
+from app.services.provider_key_service import ProviderKeyService
 from app.schemas.chat import ChatResponse, ConversationHistoryResponse, ConversationRead, MessageRead, UsageRead
 
 
@@ -27,11 +28,13 @@ class ChatService:
         provider: AIProvider,
         model_selector: ModelSelector,
         token_tracker: TokenTracker,
+        provider_key_service: ProviderKeyService | None = None,
     ) -> None:
         self.chat_repo = chat_repo
         self.provider = provider
         self.model_selector = model_selector
         self.token_tracker = token_tracker
+        self.provider_key_service = provider_key_service
 
     async def send_message(
         self,
@@ -71,10 +74,15 @@ class ChatService:
                 if msg.role in {"user", "assistant"}
             ]
             history.append({"role": "user", "content": message})
+            api_key = None
+            if self.provider_key_service is not None:
+                provider_name = self.provider.__class__.__name__.replace("Provider", "").lower()
+                api_key = await self.provider_key_service.resolve_api_key(provider=provider_name)
             ai_result = await self.provider.generate_response(
                 model=model_name,
                 prompt=message,
                 messages=history,
+                api_key=api_key,
             )
             usage = ai_result["usage"]
             assistant_content = clean_assistant_text(ai_result["content"])

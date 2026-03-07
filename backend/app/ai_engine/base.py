@@ -15,6 +15,7 @@ class AIProvider(ABC):
         model: str,
         prompt: str,
         messages: list[dict[str, str]] | None = None,
+        api_key: str | None = None,
     ) -> dict:
         """Generate a response from a provider.
 
