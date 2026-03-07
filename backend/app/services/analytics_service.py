@@ -36,7 +36,8 @@ class AnalyticsService:
         return [DailyUsageRead(**row) for row in rows]
 
     async def get_activities(self, *, user_id, limit: int = 10) -> list[ActivityRead]:
-        rows = await self.usage_repo.get_recent_usage_logs(user_id=user_id, limit=limit)
+        capped_limit = max(1, min(limit, 10))
+        rows = await self.usage_repo.get_recent_usage_logs(user_id=user_id, limit=capped_limit)
         return [
             ActivityRead(
                 id=str(row.id),

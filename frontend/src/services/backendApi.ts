@@ -418,7 +418,7 @@ export async function fetchDailyUsageFromBackend(): Promise<DailyUsage[]> {
 }
 
 export async function fetchActivitiesFromBackend(): Promise<Activity[]> {
-  const result = await request<ApiEnvelope<ActivitiesPayload>>("/analytics/activities");
+  const result = await request<ApiEnvelope<ActivitiesPayload>>("/analytics/activities?limit=10");
   return result.data.activities;
 }
 
