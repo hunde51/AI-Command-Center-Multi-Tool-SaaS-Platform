@@ -21,6 +21,7 @@ class GeminiProvider(AIProvider):
         model: str,
         prompt: str,
         messages: list[dict[str, str]] | None = None,
+        api_key: str | None = None,
     ) -> dict:
         chat_messages = messages or [{"role": "user", "content": prompt}]
         contents = [
@@ -61,7 +62,7 @@ class GeminiProvider(AIProvider):
 
             url = (
                 "https://generativelanguage.googleapis.com/v1beta/models/"
-                f"{candidate}:generateContent?key={settings.gemini_api_key}"
+                f"{candidate}:generateContent?key={api_key or settings.gemini_api_key}"
             )
 
             for attempt in range(2):

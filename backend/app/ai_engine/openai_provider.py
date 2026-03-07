@@ -21,9 +21,10 @@ class OpenAIProvider(AIProvider):
         model: str,
         prompt: str,
         messages: list[dict[str, str]] | None = None,
+        api_key: str | None = None,
     ) -> dict:
         headers = {
-            "Authorization": f"Bearer {settings.openai_api_key}",
+            "Authorization": f"Bearer {api_key or settings.openai_api_key}",
             "Content-Type": "application/json",
         }
         chat_messages = messages or [{"role": "user", "content": prompt}]
