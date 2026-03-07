@@ -12,10 +12,12 @@ from app.api.deps import require_admin
 from app.db.session import get_db
 from app.models.user import User
 from app.repositories.admin_log_repo import AdminLogRepository
+from app.repositories.provider_credential_repo import ProviderCredentialRepository
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.user_repo import UserRepository
 from app.repositories.usage_repo import UsageRepository
 from app.schemas.tool import ToolCreateRequest, ToolRead, ToolUpdateRequest
+from app.services.provider_key_service import ProviderKeyService
 from app.services.admin_service import AdminUserService
 from app.services.tool_service import ToolService
 from app.utils.response_wrapper import api_response
@@ -30,6 +32,7 @@ def _tool_service(db: AsyncSession) -> ToolService:
         provider=get_ai_provider(),
         model_selector=ModelSelector(),
         cost_calculator=CostCalculator(),
+        provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
     )
 
 
@@ -77,9 +80,13 @@ async def create_tool(
         slug=payload.slug,
         description=payload.description,
         system_prompt_template=payload.system_prompt_template,
+        model_name=payload.model_name,
         input_schema=payload.input_schema,
+        admin_locked=payload.admin_locked,
         is_active=payload.is_active,
         version=payload.version,
+        created_by_user_id=current_user.id,
+        actor_role=current_user.role.value,
     )
     await _log_tool_action(
         db=db,
@@ -104,9 +111,13 @@ async def update_tool(
         slug=payload.slug,
         description=payload.description,
         system_prompt_template=payload.system_prompt_template,
+        model_name=payload.model_name,
         input_schema=payload.input_schema,
+        admin_locked=payload.admin_locked,
         is_active=payload.is_active,
         version=payload.version,
+        actor_id=current_user.id,
+        actor_role=current_user.role.value,
     )
     await _log_tool_action(
         db=db,

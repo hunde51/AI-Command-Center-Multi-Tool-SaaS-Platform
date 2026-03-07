@@ -9,11 +9,11 @@ from app.ai_engine.provider_factory import get_ai_provider
 from app.api.deps import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
+from app.repositories.provider_credential_repo import ProviderCredentialRepository
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.usage_repo import UsageRepository
-from app.schemas.tool import (
-    ToolExecuteRequest,
-)
+from app.schemas.tool import ToolExecuteRequest
+from app.services.provider_key_service import ProviderKeyService
 from app.services.tool_service import ToolService
 from app.utils.response_wrapper import api_response
 
@@ -27,6 +27,7 @@ def _service(db: AsyncSession) -> ToolService:
         provider=get_ai_provider(),
         model_selector=ModelSelector(),
         cost_calculator=CostCalculator(),
+        provider_key_service=ProviderKeyService(ProviderCredentialRepository(db)),
     )
 
 
