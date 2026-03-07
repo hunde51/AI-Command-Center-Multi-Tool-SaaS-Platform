@@ -66,7 +66,10 @@ export default function AITools() {
                 <h3 className="font-display font-semibold text-card-foreground">{tool.name}</h3>
                 <p className="text-sm text-muted-foreground mt-1">{tool.description}</p>
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <span className="text-xs text-muted-foreground">v{tool.version}</span>
+                  <div className="text-xs text-muted-foreground">
+                    <div>v{tool.version}</div>
+                    <div>{tool.model_name}</div>
+                  </div>
                   <Button
                     size="sm"
                     variant={selectedSlug === tool.slug ? "default" : "outline"}

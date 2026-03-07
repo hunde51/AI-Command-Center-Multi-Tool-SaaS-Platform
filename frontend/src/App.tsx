@@ -19,6 +19,7 @@ import AdminOverview from "@/pages/admin/AdminOverview";
 import UserManagement from "@/pages/admin/UserManagement";
 import UsageLogs from "@/pages/admin/UsageLogs";
 import ToolManagement from "@/pages/admin/ToolManagement";
+import ProviderKeys from "@/pages/admin/ProviderKeys";
 import SystemHealth from "@/pages/admin/SystemHealth";
 import FeatureFlags from "@/pages/admin/FeatureFlags";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="users" element={<UserManagement />} />
               <Route path="logs" element={<UsageLogs />} />
               <Route path="tools" element={<ToolManagement />} />
+              <Route path="provider-keys" element={<ProviderKeys />} />
               <Route path="health" element={<SystemHealth />} />
               <Route path="flags" element={<FeatureFlags />} />
               <Route path="analytics" element={<AdminAnalytics />} />
