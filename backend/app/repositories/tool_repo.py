@@ -35,7 +35,10 @@ class ToolRepository:
         slug: str,
         description: str,
         system_prompt_template: str,
+        model_name: str,
         input_schema: dict,
+        admin_locked: bool,
+        created_by_user_id: UUID | None,
         is_active: bool,
         version: int,
     ) -> Tool:
@@ -44,7 +47,10 @@ class ToolRepository:
             slug=slug,
             description=description,
             system_prompt_template=system_prompt_template,
+            model_name=model_name,
             input_schema=input_schema,
+            admin_locked=admin_locked,
+            created_by_user_id=created_by_user_id,
             is_active=is_active,
             version=version,
         )
@@ -64,7 +70,9 @@ class ToolRepository:
         slug: str,
         description: str,
         system_prompt_template: str,
+        model_name: str,
         input_schema: dict,
+        admin_locked: bool,
         is_active: bool,
         version: int,
     ) -> Tool:
@@ -72,7 +80,9 @@ class ToolRepository:
         tool.slug = slug
         tool.description = description
         tool.system_prompt_template = system_prompt_template
+        tool.model_name = model_name
         tool.input_schema = input_schema
+        tool.admin_locked = admin_locked
         tool.is_active = is_active
         tool.version = version
         await self.db.flush()
