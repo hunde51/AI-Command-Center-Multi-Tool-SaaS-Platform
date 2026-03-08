@@ -56,6 +56,28 @@ class TopUserUsageRead(BaseModel):
     tokens_used: int
 
 
+class ModelUsageRead(BaseModel):
+    model_name: str
+    requests: int
+    tokens: int
+
+
+class FileUsageRead(BaseModel):
+    files_uploaded: int
+    analysis_jobs_executed: int
+
+
+class AgentUsageRead(BaseModel):
+    agent_name: str
+    executions: int
+
+
+class AgentTopUserRead(BaseModel):
+    user_id: UUID
+    username: str
+    executions: int
+
+
 class ProviderKeyUpsertRequest(BaseModel):
     provider: str
     api_key: str
