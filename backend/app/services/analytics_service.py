@@ -4,14 +4,26 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.conversation import Conversation
+from app.models.file_document import FileDocument
 from app.models.message import Message
 from app.models.tool import Tool
 from app.models.tool_usage import ToolUsage
 from app.models.usage_log import UsageLog
 from app.models.user import User
+from app.models.agent import Agent
+from app.models.agent_usage import AgentUsage
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.usage_repo import UsageRepository
-from app.schemas.admin import AdminOverviewRead, TokenUsageRead, ToolUsageStatsRead, TopUserUsageRead
+from app.schemas.admin import (
+    AdminOverviewRead,
+    AgentTopUserRead,
+    AgentUsageRead,
+    FileUsageRead,
+    ModelUsageRead,
+    TokenUsageRead,
+    ToolUsageStatsRead,
+    TopUserUsageRead,
+)
 from app.schemas.analytics import ActivityRead, DailyUsageRead, UsageStatsRead
 
 
@@ -139,3 +151,67 @@ class AnalyticsService:
             )
             for row in result.all()
         ]
+
+    async def get_admin_model_usage(self) -> list[ModelUsageRead]:
+        result = await self.db.execute(
+            select(
+                UsageLog.model_used.label("model_name"),
+                func.count(UsageLog.id).label("requests"),
+                func.coalesce(func.sum(UsageLog.tokens_used), 0).label("tokens"),
+            )
+            .group_by(UsageLog.model_used)
+            .order_by(func.count(UsageLog.id).desc())
+        )
+        return [
+            ModelUsageRead(
+                model_name=row.model_name or "unknown",
+                requests=int(row.requests or 0),
+                tokens=int(row.tokens or 0),
+            )
+            for row in result.all()
+        ]
+
+    async def get_admin_file_usage(self) -> FileUsageRead:
+        uploaded = await self.db.scalar(select(func.count(FileDocument.id)))
+        jobs = await self.db.scalar(select(func.coalesce(func.sum(FileDocument.analysis_jobs_executed), 0)))
+        return FileUsageRead(
+            files_uploaded=int(uploaded or 0),
+            analysis_jobs_executed=int(jobs or 0),
+        )
+
+    async def get_admin_agent_usage(self, *, limit: int = 10) -> tuple[list[AgentUsageRead], list[AgentTopUserRead]]:
+        agent_rows = await self.db.execute(
+            select(
+                Agent.name.label("agent_name"),
+                func.count(AgentUsage.id).label("executions"),
+            )
+            .join(AgentUsage, AgentUsage.agent_id == Agent.id)
+            .group_by(Agent.id)
+            .order_by(func.count(AgentUsage.id).desc())
+            .limit(limit)
+        )
+        user_rows = await self.db.execute(
+            select(
+                User.id.label("user_id"),
+                User.username.label("username"),
+                func.count(AgentUsage.id).label("executions"),
+            )
+            .join(AgentUsage, AgentUsage.user_id == User.id)
+            .group_by(User.id)
+            .order_by(func.count(AgentUsage.id).desc())
+            .limit(limit)
+        )
+        return (
+            [
+                AgentUsageRead(agent_name=row.agent_name, executions=int(row.executions or 0))
+                for row in agent_rows.all()
+            ],
+            [
+                AgentTopUserRead(
+                    user_id=row.user_id,
+                    username=row.username,
+                    executions=int(row.executions or 0),
+                )
+                for row in user_rows.all()
+            ],
+        )
