@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, BarChart3, Zap, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "next-themes";
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; label: string; value: string; sub: string }) {
   return (
@@ -21,6 +22,14 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; 
 }
 
 export default function Dashboard() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const chartLineColor = isDark ? "hsl(142, 71%, 45%)" : "hsl(221, 83%, 53%)";
+  const chartGridColor = isDark ? "hsl(220, 30%, 18%)" : "hsl(220, 13%, 91%)";
+  const chartTickColor = isDark ? "hsl(215, 20%, 65%)" : "hsl(220, 9%, 46%)";
+  const tooltipBg = isDark ? "hsl(220, 40%, 8%)" : "hsl(0, 0%, 100%)";
+  const tooltipBorder = isDark ? "hsl(220, 30%, 20%)" : "hsl(220, 13%, 91%)";
+
   const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ["usageStats"], queryFn: fetchUsageStats });
   const { data: dashboardStatus } = useQuery({ queryKey: ["dashboardStatus"], queryFn: fetchDashboardStatus });
   const { data: dailyUsage, isLoading: chartLoading } = useQuery({ queryKey: ["dailyUsage"], queryFn: fetchDailyUsage });
@@ -62,22 +71,22 @@ export default function Dashboard() {
               <AreaChart data={dailyUsage}>
                 <defs>
                   <linearGradient id="tokenGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor={chartLineColor} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={chartLineColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-                <XAxis dataKey="date" tick={{ fontSize: 12, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: chartTickColor }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: chartTickColor }} axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(0, 0%, 100%)",
-                    border: "1px solid hsl(220, 13%, 91%)",
+                    backgroundColor: tooltipBg,
+                    border: `1px solid ${tooltipBorder}`,
                     borderRadius: "12px",
                     fontSize: "12px",
                   }}
                 />
-                <Area type="monotone" dataKey="tokens" stroke="hsl(221, 83%, 53%)" strokeWidth={2} fill="url(#tokenGradient)" />
+                <Area type="monotone" dataKey="tokens" stroke={chartLineColor} strokeWidth={2} fill="url(#tokenGradient)" />
               </AreaChart>
             </ResponsiveContainer>
           ) : null}

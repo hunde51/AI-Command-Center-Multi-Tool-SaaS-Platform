@@ -231,10 +231,10 @@ export default function AIChat() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] -m-6 bg-gradient-to-br from-stone-50 via-amber-50/60 to-slate-50">
-      <div className="w-72 border-r border-stone-200/80 bg-stone-50/80 backdrop-blur-sm flex flex-col shrink-0 hidden md:flex">
-        <div className="p-4 border-b border-stone-200/70">
-          <Button variant="outline" className="w-full gap-2 justify-start border-stone-300 bg-stone-100/80 hover:bg-stone-100 text-stone-900" onClick={handleNewChat}>
+    <div className="flex h-[calc(100vh-5rem)] -m-6 bg-background">
+      <div className="w-72 border-r border-border/80 bg-card/60 backdrop-blur-sm flex flex-col shrink-0 hidden md:flex">
+        <div className="p-4 border-b border-border/80">
+          <Button variant="outline" className="w-full gap-2 justify-start" onClick={handleNewChat}>
             <Plus className="h-4 w-4" /> New Chat
           </Button>
         </div>
@@ -246,7 +246,7 @@ export default function AIChat() {
                   <div
                     key={c.id}
                     className={`w-full rounded-lg px-2 py-1 text-sm transition-colors ${
-                      selectedConvId === c.id ? "bg-stone-200/70" : "hover:bg-stone-200/50"
+                      selectedConvId === c.id ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                     }`}
                   >
                     <div className="flex items-center gap-1">
@@ -281,19 +281,19 @@ export default function AIChat() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="md:hidden border-b border-stone-200/70 px-3 py-2 flex items-center justify-between gap-2 bg-stone-50/80">
+        <div className="md:hidden border-b border-border/80 px-3 py-2 flex items-center justify-between gap-2 bg-card/80">
           <Sheet open={mobileHistoryOpen} onOpenChange={setMobileHistoryOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" aria-label="Open conversations">
                 <PanelLeft className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-              <SheetContent side="left" className="w-[85vw] max-w-sm p-0 bg-stone-50">
-              <SheetHeader className="px-4 py-3 border-b border-stone-200/70">
+              <SheetContent side="left" className="w-[85vw] max-w-sm p-0 bg-card">
+              <SheetHeader className="px-4 py-3 border-b border-border/80">
                 <SheetTitle>Conversations</SheetTitle>
               </SheetHeader>
-              <div className="p-4 border-b border-stone-200/70">
-                <Button variant="outline" className="w-full gap-2 justify-start border-stone-300 bg-stone-100/80 hover:bg-stone-100 text-stone-900" onClick={handleNewChat}>
+              <div className="p-4 border-b border-border/80">
+                <Button variant="outline" className="w-full gap-2 justify-start" onClick={handleNewChat}>
                   <Plus className="h-4 w-4" /> New Chat
                 </Button>
               </div>
@@ -305,7 +305,7 @@ export default function AIChat() {
                         <div
                           key={c.id}
                           className={`w-full rounded-lg px-2 py-1 text-sm transition-colors ${
-                            selectedConvId === c.id ? "bg-stone-200/70" : "hover:bg-stone-200/50"
+                            selectedConvId === c.id ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                           }`}
                         >
                           <div className="flex items-center gap-1">
@@ -348,10 +348,10 @@ export default function AIChat() {
           </Button>
         </div>
 
-        <div className="h-12 border-b border-stone-200/70 hidden md:flex items-center justify-between px-4 shrink-0 bg-stone-50/80">
+        <div className="h-12 border-b border-border/80 hidden md:flex items-center justify-between px-4 shrink-0 bg-card/80">
           <h2 className="text-sm font-semibold text-foreground truncate">{selectedConv?.title || "New conversation"}</h2>
           <Select value={model} onValueChange={setModel}>
-            <SelectTrigger className="w-44 h-8 text-xs border-stone-300 bg-stone-100/80 text-stone-900">
+            <SelectTrigger className="w-44 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -361,33 +361,33 @@ export default function AIChat() {
         </div>
 
         <ScrollArea className="flex-1 px-4">
-          <div className="max-w-3xl mx-auto py-6 space-y-6">
+          <div className="max-w-4xl mx-auto py-6 space-y-6">
             {localMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-12 w-12 rounded-2xl bg-stone-200/80 flex items-center justify-center mb-4">
-                  <MessageSquare className="h-6 w-6 text-stone-700" />
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="font-display font-semibold text-foreground">Start a conversation</h3>
                 <p className="text-sm text-muted-foreground mt-1 max-w-sm">Ask anything and AI will respond with context from this chat.</p>
               </div>
             ) : (
               localMessages.map((msg) => (
-                <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+                <div key={msg.id} className={`flex items-start gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
                   {msg.role === "assistant" && (
-                    <div className="h-8 w-8 rounded-lg bg-stone-200/80 border border-stone-300/70 flex items-center justify-center shrink-0 mt-0.5">
-                      <Bot className="h-4 w-4 text-stone-700" />
+                    <div className="h-8 w-8 rounded-full bg-primary/10 border border-border flex items-center justify-center shrink-0 mt-0.5">
+                      <Bot className="h-4 w-4 text-primary" />
                     </div>
                   )}
-                  <div className={`rounded-2xl px-4 py-3 max-w-[80%] text-sm leading-relaxed border ${
+                  <div className={`rounded-2xl px-4 py-3 max-w-[85%] text-sm leading-7 border ${
                     msg.role === "user"
-                      ? "bg-amber-100/70 text-stone-900 border-amber-200"
-                      : "bg-white/85 text-stone-900 border-stone-200 shadow-sm"
+                      ? "bg-primary text-primary-foreground border-primary/20 shadow-sm"
+                      : "bg-card text-card-foreground border-border shadow-sm"
                   }`}>
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                   {msg.role === "user" && (
-                    <div className="h-8 w-8 rounded-lg bg-stone-200/80 border border-stone-300/70 flex items-center justify-center shrink-0 mt-0.5">
-                      <User className="h-4 w-4 text-stone-700" />
+                    <div className="h-8 w-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 mt-0.5">
+                      <User className="h-4 w-4 text-secondary-foreground" />
                     </div>
                   )}
                 </div>
@@ -395,12 +395,12 @@ export default function AIChat() {
             )}
             {mutation.isPending && !isStreamingAssistant && (
               <div className="flex gap-3">
-                <div className="h-8 w-8 rounded-lg bg-stone-200/80 border border-stone-300/70 flex items-center justify-center shrink-0">
-                  <Bot className="h-4 w-4 text-stone-700" />
+                <div className="h-8 w-8 rounded-full bg-primary/10 border border-border flex items-center justify-center shrink-0">
+                  <Bot className="h-4 w-4 text-primary" />
                 </div>
-                <div className="rounded-2xl bg-white/85 border border-stone-200 shadow-sm px-4 py-3 flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-stone-500" />
-                  <span className="text-sm text-stone-500">Thinking...</span>
+                <div className="rounded-2xl bg-card border border-border shadow-sm px-4 py-3 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Thinking...</span>
                 </div>
               </div>
             )}
@@ -408,9 +408,9 @@ export default function AIChat() {
           </div>
         </ScrollArea>
 
-        <div className="border-t border-stone-200/70 p-4 bg-stone-50/80">
-          <div className="max-w-3xl mx-auto flex gap-2">
-            <Button variant="ghost" size="icon" className="shrink-0 text-stone-600 hover:bg-stone-200/60 hover:text-stone-800" disabled={mutation.isPending} onClick={() => selectedConvId && queryClient.invalidateQueries({ queryKey: ["conversation", selectedConvId] })}>
+        <div className="border-t border-border/80 p-4 bg-card/80 backdrop-blur-sm">
+          <div className="max-w-4xl mx-auto flex gap-2">
+            <Button variant="ghost" size="icon" className="shrink-0" disabled={mutation.isPending} onClick={() => selectedConvId && queryClient.invalidateQueries({ queryKey: ["conversation", selectedConvId] })}>
               <RefreshCw className="h-4 w-4" />
             </Button>
             <Input
@@ -419,9 +419,9 @@ export default function AIChat() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               disabled={mutation.isPending || isStreamingAssistant}
-              className="flex-1 border-stone-300 bg-white/90 text-stone-900 placeholder:text-stone-400"
+              className="flex-1"
             />
-            <Button size="icon" className="bg-stone-800 text-stone-100 hover:bg-stone-700" onClick={handleSend} disabled={mutation.isPending || isStreamingAssistant || !inputValue.trim()}>
+            <Button size="icon" onClick={handleSend} disabled={mutation.isPending || isStreamingAssistant || !inputValue.trim()}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
