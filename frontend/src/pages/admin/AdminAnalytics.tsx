@@ -3,10 +3,15 @@ import { fetchAdminTokenUsageFromBackend, fetchAdminToolUsageFromBackend, fetchA
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { useTheme } from "next-themes";
 
 const COLORS = ["hsl(221, 83%, 53%)", "hsl(199, 89%, 48%)", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)"];
 
 export default function AdminAnalytics() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const lineColor = isDark ? "hsl(142, 71%, 45%)" : "hsl(var(--accent))";
+
   const { data: tokenUsage, isLoading: loadingUsage } = useQuery({ queryKey: ["admin-token-usage-30"], queryFn: () => fetchAdminTokenUsageFromBackend(30) });
   const { data: toolUsage, isLoading: loadingTools } = useQuery({ queryKey: ["admin-tool-usage"], queryFn: fetchAdminToolUsageFromBackend });
   const { data: topUsers, isLoading: loadingUsers } = useQuery({ queryKey: ["admin-top-users"], queryFn: () => fetchAdminTopUsersFromBackend(10) });
@@ -77,7 +82,7 @@ export default function AdminAnalytics() {
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
                   <Tooltip formatter={(value: number) => [`${value.toLocaleString()} tokens`]} />
-                  <Line type="monotone" dataKey="tokens" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="tokens" stroke={lineColor} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             )}

@@ -4,8 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Activity, Zap, AlertTriangle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useTheme } from "next-themes";
 
 export default function AdminOverview() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const areaStroke = isDark ? "hsl(142, 71%, 45%)" : "hsl(var(--primary))";
+  const areaFill = isDark ? "hsl(142, 71%, 45% / 0.2)" : "hsl(var(--primary) / 0.15)";
+
   const { data: overview, isLoading: loadingOverview } = useQuery({ queryKey: ["admin-overview"], queryFn: fetchAdminOverviewFromBackend });
   const { data: usage, isLoading: loadingUsage } = useQuery({ queryKey: ["admin-token-usage"], queryFn: () => fetchAdminTokenUsageFromBackend(7) });
 
@@ -59,7 +65,7 @@ export default function AdminOverview() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                 <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
                 <Tooltip formatter={(value: number) => [`${value.toLocaleString()} tokens`, "Tokens"]} />
-                <Area type="monotone" dataKey="tokens" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.15)" strokeWidth={2} />
+                <Area type="monotone" dataKey="tokens" stroke={areaStroke} fill={areaFill} strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           )}
