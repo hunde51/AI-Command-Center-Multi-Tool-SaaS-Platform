@@ -7,3 +7,7 @@ from app.models.tool import *  # noqa: F401,F403
 from app.models.tool_usage import *  # noqa: F401,F403
 from app.models.admin_log import *  # noqa: F401,F403
 from app.models.provider_credential import *  # noqa: F401,F403
+from app.models.agent import *  # noqa: F401,F403
+from app.models.agent_usage import *  # noqa: F401,F403
+from app.models.file_document import *  # noqa: F401,F403
+from app.models.subscription import *  # noqa: F401,F403
