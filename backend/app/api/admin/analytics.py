@@ -60,3 +60,41 @@ async def top_users(
     _ = current_user
     rows = await _service(db).get_admin_top_users(limit=limit)
     return api_response(True, "Top users fetched", {"items": [row.model_dump() for row in rows]})
+
+
+@router.get("/model-usage")
+async def model_usage(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    _ = current_user
+    rows = await _service(db).get_admin_model_usage()
+    return api_response(True, "Model usage fetched", {"items": [row.model_dump() for row in rows]})
+
+
+@router.get("/file-usage")
+async def file_usage(
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    _ = current_user
+    stats = await _service(db).get_admin_file_usage()
+    return api_response(True, "File usage fetched", stats.model_dump())
+
+
+@router.get("/agent-usage")
+async def agent_usage(
+    limit: int = Query(default=10, ge=1, le=100),
+    current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    _ = current_user
+    by_agent, by_user = await _service(db).get_admin_agent_usage(limit=limit)
+    return api_response(
+        True,
+        "Agent usage fetched",
+        {
+            "top_agents": [row.model_dump() for row in by_agent],
+            "top_users": [row.model_dump() for row in by_user],
+        },
+    )
