@@ -4,13 +4,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
+from app.core.rate_limit import RedisRateLimitMiddleware
 from app.services.admin_service import AdminServiceError
+from app.services.agent_service import AgentServiceError
 from app.services.auth_service import AuthError
 from app.services.chat_service import ChatError
+from app.services.file_service import FileServiceError
 from app.services.tool_service import ToolServiceError
 from app.utils.response_wrapper import api_response
 
 app = FastAPI(title="AI Command Center API", version="0.1.0")
+app.add_middleware(RedisRateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -53,6 +57,22 @@ async def tool_service_error_handler(_: Request, exc: ToolServiceError) -> JSONR
 
 @app.exception_handler(AdminServiceError)
 async def admin_service_error_handler(_: Request, exc: AdminServiceError) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=api_response(False, exc.message, {}),
+    )
+
+
+@app.exception_handler(AgentServiceError)
+async def agent_service_error_handler(_: Request, exc: AgentServiceError) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=api_response(False, exc.message, {}),
+    )
+
+
+@app.exception_handler(FileServiceError)
+async def file_service_error_handler(_: Request, exc: FileServiceError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content=api_response(False, exc.message, {}),
