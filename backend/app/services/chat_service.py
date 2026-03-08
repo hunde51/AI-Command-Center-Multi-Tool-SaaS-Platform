@@ -11,6 +11,7 @@ from app.ai_engine.token_tracker import TokenTracker
 from app.models.user import User
 from app.repositories.chat_repo import ChatRepository
 from app.services.provider_key_service import ProviderKeyService
+from app.services.quota_service import QuotaExceededError, QuotaService
 from app.schemas.chat import ChatResponse, ConversationHistoryResponse, ConversationRead, MessageRead, UsageRead
 
 
@@ -29,12 +30,14 @@ class ChatService:
         model_selector: ModelSelector,
         token_tracker: TokenTracker,
         provider_key_service: ProviderKeyService | None = None,
+        quota_service: QuotaService | None = None,
     ) -> None:
         self.chat_repo = chat_repo
         self.provider = provider
         self.model_selector = model_selector
         self.token_tracker = token_tracker
         self.provider_key_service = provider_key_service
+        self.quota_service = quota_service
 
     async def send_message(
         self,
@@ -78,6 +81,11 @@ class ChatService:
             if self.provider_key_service is not None:
                 provider_name = self.provider.__class__.__name__.replace("Provider", "").lower()
                 api_key = await self.provider_key_service.resolve_api_key(provider=provider_name)
+            if self.quota_service is not None:
+                await self.quota_service.ensure_allowed(
+                    user_id=current_user.id,
+                    requested_tokens=max(100, len(message) // 3),
+                )
             ai_result = await self.provider.generate_response(
                 model=model_name,
                 prompt=message,
@@ -99,6 +107,11 @@ class ChatService:
                 usage=usage,
                 cost_estimate=cost_estimate,
             )
+            if self.quota_service is not None:
+                await self.quota_service.consume(
+                    user_id=current_user.id,
+                    tokens_used=int(usage.get("total_tokens", 0)),
+                )
 
             await self.chat_repo.db.commit()
             await self.chat_repo.db.refresh(conversation)
@@ -107,6 +120,9 @@ class ChatService:
         except AIProviderError as exc:
             await self.chat_repo.db.rollback()
             raise ChatError(str(exc), status.HTTP_503_SERVICE_UNAVAILABLE) from exc
+        except QuotaExceededError as exc:
+            await self.chat_repo.db.rollback()
+            raise ChatError(exc.message, exc.status_code) from exc
         except Exception:
             await self.chat_repo.db.rollback()
             raise
