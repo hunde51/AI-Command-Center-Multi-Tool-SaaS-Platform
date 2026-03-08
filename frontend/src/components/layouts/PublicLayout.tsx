@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navLinks = [
   { label: "Features", to: "/features" },
@@ -39,6 +40,7 @@ export default function PublicLayout() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             <Button variant={isLanding ? "hero-outline" : "ghost"} size="sm" asChild>
               <Link to="/login">Sign In</Link>
             </Button>
@@ -63,6 +65,7 @@ export default function PublicLayout() {
               </Link>
             ))}
             <div className="flex gap-2 pt-2">
+              <ThemeToggle />
               <Button variant="outline" size="sm" asChild className="flex-1">
                 <Link to="/login">Sign In</Link>
               </Button>

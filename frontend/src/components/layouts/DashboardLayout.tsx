@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { clearTokens, getUserEmail, getUserName } from "@/services/backendApi";
 import { fetchUsageStats } from "@/services/runtimeData";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -118,6 +119,7 @@ export default function DashboardLayout() {
               <span className="text-sm font-medium text-muted-foreground">Welcome back, {displayName}</span>
             </div>
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-4 w-4" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />

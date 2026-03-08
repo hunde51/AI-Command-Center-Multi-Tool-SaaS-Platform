@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
 import { Users, FileText, Wrench, Activity, ToggleRight, BarChart3, Shield, KeyRound } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const adminNavItems = [
   { title: "Overview", url: "/admin", icon: Activity },
@@ -80,7 +81,7 @@ export default function AdminLayout() {
               <SidebarTrigger />
               <span className="text-sm font-medium text-destructive">Admin Panel</span>
             </div>
-            <div />
+            <ThemeToggle />
           </header>
           <main className="flex-1 overflow-auto p-6">
             <Outlet />
