@@ -11,6 +11,7 @@ from app.ai_engine.response_cleaner import clean_assistant_text
 from app.repositories.tool_repo import ToolRepository
 from app.repositories.usage_repo import UsageRepository
 from app.services.provider_key_service import ProviderKeyService
+from app.services.quota_service import QuotaExceededError, QuotaService
 from app.schemas.tool import ToolExecutionRead, ToolRead, ToolUsageRead
 
 
@@ -31,6 +32,7 @@ class ToolService:
         model_selector: ModelSelector,
         cost_calculator: CostCalculator,
         provider_key_service: ProviderKeyService | None = None,
+        quota_service: QuotaService | None = None,
     ) -> None:
         self.tool_repo = tool_repo
         self.usage_repo = usage_repo
@@ -38,6 +40,7 @@ class ToolService:
         self.model_selector = model_selector
         self.cost_calculator = cost_calculator
         self.provider_key_service = provider_key_service
+        self.quota_service = quota_service
 
     async def execute_tool(self, slug: str, user_input: str, user_id: UUID) -> ToolExecutionRead:
         tool = await self.tool_repo.get_tool_by_slug(slug=slug)
@@ -57,6 +60,11 @@ class ToolService:
             provider_name = self.provider.__class__.__name__.replace("Provider", "").lower()
             api_key = await self.provider_key_service.resolve_api_key(provider=provider_name)
         try:
+            if self.quota_service is not None:
+                await self.quota_service.ensure_allowed(
+                    user_id=user_id,
+                    requested_tokens=max(100, len(rendered_prompt) // 3),
+                )
             ai_result = await self.provider.generate_response(
                 model=model_name,
                 prompt=rendered_prompt,
@@ -66,6 +74,9 @@ class ToolService:
         except AIProviderError as exc:
             await self.tool_repo.db.rollback()
             raise ToolServiceError(str(exc), status.HTTP_503_SERVICE_UNAVAILABLE) from exc
+        except QuotaExceededError as exc:
+            await self.tool_repo.db.rollback()
+            raise ToolServiceError(exc.message, exc.status_code) from exc
 
         usage = ai_result["usage"]
         tokens_used = int(usage.get("total_tokens", 0))
@@ -86,6 +97,8 @@ class ToolService:
             tokens_used=tokens_used,
             cost_estimate=cost_estimate,
         )
+        if self.quota_service is not None:
+            await self.quota_service.consume(user_id=user_id, tokens_used=tokens_used)
         await self.tool_repo.db.commit()
 
         return ToolExecutionRead(
