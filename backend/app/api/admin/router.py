@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.admin.analytics import router as analytics_router
+from app.api.admin.feature_flags import router as feature_flags_router
 from app.api.admin.logs import router as logs_router
 from app.api.admin.provider_keys import router as provider_keys_router
 from app.api.admin.tools import router as tools_router
@@ -12,3 +13,4 @@ router.include_router(analytics_router)
 router.include_router(tools_router)
 router.include_router(provider_keys_router)
 router.include_router(logs_router)
+router.include_router(feature_flags_router)

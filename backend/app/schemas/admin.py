@@ -88,3 +88,16 @@ class ProviderKeyRead(BaseModel):
     provider: str
     masked_api_key: str | None
     has_database_key: bool
+
+
+class FeatureFlagRead(BaseModel):
+    key: str
+    name: str
+    description: str
+    enabled: bool
+    category: str
+    updated_by: UUID | None = None
+
+
+class FeatureFlagUpdateRequest(BaseModel):
+    enabled: bool
