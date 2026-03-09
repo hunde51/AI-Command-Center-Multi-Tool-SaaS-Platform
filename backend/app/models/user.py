@@ -23,6 +23,9 @@ class User(Base):
         Enum(UserRole, name="user_role"), nullable=False, default=UserRole.USER
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    failed_login_attempts: Mapped[int] = mapped_column(nullable=False, default=0)
+    lock_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
