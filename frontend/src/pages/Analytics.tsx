@@ -36,7 +36,14 @@ export default function Analytics() {
                 <XAxis dataKey="date" tick={{ fontSize: 12, fill: tickColor }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: tickColor }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: "12px", fontSize: "12px" }} />
-                <Bar dataKey="tokens" fill={barFill} stroke={barStroke} strokeWidth={2} radius={[6, 6, 0, 0]} />
+                <Bar
+                  dataKey="tokens"
+                  fill={barFill}
+                  stroke={barStroke}
+                  strokeWidth={2}
+                  radius={[6, 6, 0, 0]}
+                  activeBar={isDark ? { fill: "transparent", stroke: "hsl(0, 0%, 0%)", strokeWidth: 2 } : undefined}
+                />
               </BarChart>
             </ResponsiveContainer>
           ) : null}

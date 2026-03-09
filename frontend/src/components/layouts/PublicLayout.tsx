@@ -7,8 +7,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 const navLinks = [
   { label: "Features", to: "/features" },
   { label: "Pricing", to: "/pricing" },
-  { label: "Docs", to: "#" },
-  { label: "Blog", to: "#" },
+  { label: "Docs", to: "/docs" },
+  { label: "Blog", to: "/blog" },
 ];
 
 export default function PublicLayout() {
