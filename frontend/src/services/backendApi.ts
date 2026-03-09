@@ -112,6 +112,7 @@ type RegisterResponse = {
     email: string;
     username: string;
   };
+  verification_token?: string | null;
 };
 
 type DashboardResponse = {
@@ -313,6 +314,15 @@ type ProviderKeyReadPayload = {
   has_database_key: boolean;
 };
 
+type FeatureFlagPayload = {
+  key: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  category: string;
+  updated_by: string | null;
+};
+
 function toMessage(item: { id: string; role: "user" | "assistant"; content: string; created_at: string }): Message {
   return {
     id: item.id,
@@ -332,6 +342,12 @@ export async function registerWithBackend(params: {
     method: "POST",
     body: JSON.stringify(params),
   });
+  if (result.data.verification_token) {
+    await request<ApiEnvelope<Record<string, never>>>("/auth/verify-email/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token: result.data.verification_token }),
+    });
+  }
   setUserName(result.data.user.name);
   setUserEmail(result.data.user.email);
 }
@@ -589,4 +605,17 @@ export async function upsertAdminProviderKey(params: {
       reason: params.reason ?? null,
     }),
   });
+}
+
+export async function fetchAdminFeatureFlags(): Promise<FeatureFlagPayload[]> {
+  const result = await request<ApiEnvelope<{ items: FeatureFlagPayload[] }>>("/admin/feature-flags");
+  return result.data.items;
+}
+
+export async function updateAdminFeatureFlag(flagKey: string, enabled: boolean): Promise<FeatureFlagPayload> {
+  const result = await request<ApiEnvelope<{ item: FeatureFlagPayload }>>(`/admin/feature-flags/${flagKey}`, {
+    method: "PATCH",
+    body: JSON.stringify({ enabled }),
+  });
+  return result.data.item;
 }

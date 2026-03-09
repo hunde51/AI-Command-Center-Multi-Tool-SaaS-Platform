@@ -11,6 +11,8 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Pricing from "@/pages/Pricing";
 import Features from "@/pages/Features";
+import Docs from "@/pages/Docs";
+import Blog from "@/pages/Blog";
 import Dashboard from "@/pages/Dashboard";
 import AIChat from "@/pages/AIChat";
 import AITools from "@/pages/AITools";
@@ -53,6 +55,8 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/features" element={<Features />} />
+              <Route path="/docs" element={<Docs />} />
+              <Route path="/blog" element={<Blog />} />
             </Route>
             <Route path="/login" element={<Login />} />
 
