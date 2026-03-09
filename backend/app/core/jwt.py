@@ -31,6 +31,12 @@ def create_refresh_token(user_id: str, role: str) -> str:
     return _create_token(payload, expires)
 
 
+def create_action_token(user_id: str, token_type: str, expires_minutes: int) -> str:
+    payload = {"user_id": user_id, "token_type": token_type}
+    expires = timedelta(minutes=expires_minutes)
+    return _create_token(payload, expires)
+
+
 def decode_token(token: str) -> dict[str, Any]:
     try:
         return jwt.decode(token, settings.jwt_secret_key, algorithms=[ALGORITHM])
