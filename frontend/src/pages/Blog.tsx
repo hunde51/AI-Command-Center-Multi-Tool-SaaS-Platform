@@ -37,9 +37,9 @@ export default function Blog() {
             <Link key={post.id} to="/features">
               <Card className="border-transparent card-elevated hover:border-primary/20 transition-colors">
                 <CardHeader>
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <CardTitle className="text-xl">{post.title}</CardTitle>
-                    <Badge variant="secondary">{post.tag}</Badge>
+                    <Badge variant="secondary" className="w-fit">{post.tag}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -231,7 +231,7 @@ export default function AIChat() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] -m-6 bg-background">
+    <div className="flex h-[calc(100dvh-3.5rem)] sm:h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] -mx-3 sm:-mx-4 lg:-mx-6 -mb-3 sm:-mb-4 lg:-mb-6 bg-background">
       <div className="w-72 border-r border-border/80 bg-card/60 backdrop-blur-sm flex flex-col shrink-0 hidden md:flex">
         <div className="p-4 border-b border-border/80">
           <Button variant="outline" className="w-full gap-2 justify-start" onClick={handleNewChat}>
@@ -343,7 +343,7 @@ export default function AIChat() {
           <h2 className="text-sm font-semibold text-foreground truncate flex-1 text-center">
             {selectedConv?.title || "New conversation"}
           </h2>
-          <Button variant="outline" size="sm" className="gap-2" onClick={handleNewChat}>
+          <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={handleNewChat}>
             <Plus className="h-4 w-4" /> New
           </Button>
         </div>
@@ -360,7 +360,7 @@ export default function AIChat() {
           </Select>
         </div>
 
-        <ScrollArea className="flex-1 px-4">
+        <ScrollArea className="flex-1 px-3 sm:px-4">
           <div className="max-w-4xl mx-auto py-6 space-y-6">
             {localMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -378,7 +378,7 @@ export default function AIChat() {
                       <Bot className="h-4 w-4 text-primary" />
                     </div>
                   )}
-                  <div className={`rounded-2xl px-4 py-3 max-w-[85%] text-sm leading-7 border ${
+                  <div className={`rounded-2xl px-3 sm:px-4 py-3 max-w-[88%] sm:max-w-[85%] text-sm leading-7 border ${
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground border-primary/20 shadow-sm"
                       : "bg-card text-card-foreground border-border shadow-sm"
@@ -408,7 +408,7 @@ export default function AIChat() {
           </div>
         </ScrollArea>
 
-        <div className="border-t border-border/80 p-4 bg-card/80 backdrop-blur-sm">
+        <div className="border-t border-border/80 p-3 sm:p-4 bg-card/80 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto flex gap-2">
             <Button variant="ghost" size="icon" className="shrink-0" disabled={mutation.isPending} onClick={() => selectedConvId && queryClient.invalidateQueries({ queryKey: ["conversation", selectedConvId] })}>
               <RefreshCw className="h-4 w-4" />
