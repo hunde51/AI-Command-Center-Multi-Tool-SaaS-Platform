@@ -53,7 +53,7 @@ export default function Landing() {
               <Link to="/features">Explore Features</Link>
             </Button>
           </div>
-          <div className="mt-16 flex items-center justify-center gap-8 text-primary-foreground/40 text-sm opacity-0 animate-fade-in-delay-3">
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-primary-foreground/40 text-sm opacity-0 animate-fade-in-delay-3">
             <span>✓ Free tier available</span>
             <span>✓ No credit card required</span>
             <span>✓ SOC2 compliant</span>
@@ -190,7 +190,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="bg-foreground py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">

@@ -26,8 +26,8 @@ export default function UsageLogs() {
         <h1 className="font-display text-2xl font-bold text-foreground">AI Usage Logs</h1>
         <p className="text-sm text-muted-foreground">Track all AI interactions across the platform.</p>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative w-full sm:flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Filter by action (e.g. user_suspended)"
@@ -39,7 +39,7 @@ export default function UsageLogs() {
             }}
           />
         </div>
-        <div className="w-[120px]">
+        <div className="w-full sm:w-[120px]">
           <Select
             value={String(limit)}
             onValueChange={(v) => {
@@ -65,36 +65,38 @@ export default function UsageLogs() {
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Target User</TableHead>
-                  <TableHead>Metadata</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Timestamp</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs?.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-medium">{log.admin_id.slice(0, 8)}...</TableCell>
-                    <TableCell>{log.action}</TableCell>
-                    <TableCell className="text-muted-foreground">{log.target_user_id ? `${log.target_user_id.slice(0, 8)}...` : "-"}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs max-w-[320px] truncate">{JSON.stringify(log.metadata)}</TableCell>
-                    <TableCell>
-                      <Badge variant="default">success</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{new Date(log.created_at).toLocaleString()}</TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Target User</TableHead>
+                    <TableHead>Metadata</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Timestamp</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {logs?.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="font-medium whitespace-nowrap">{log.admin_id.slice(0, 8)}...</TableCell>
+                      <TableCell className="whitespace-nowrap">{log.action}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">{log.target_user_id ? `${log.target_user_id.slice(0, 8)}...` : "-"}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs max-w-[320px] truncate">{JSON.stringify(log.metadata)}</TableCell>
+                      <TableCell>
+                        <Badge variant="default">success</Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-xs text-muted-foreground">
           Page {data?.pagination.page ?? 1} of {data?.pagination.total_pages ?? 1}
         </p>

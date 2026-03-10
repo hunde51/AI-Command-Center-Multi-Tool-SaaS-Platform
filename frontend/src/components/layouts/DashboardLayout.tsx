@@ -113,12 +113,12 @@ export default function DashboardLayout() {
       <div className="min-h-screen flex w-full">
         <DashboardSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0">
-            <div className="flex items-center gap-2">
+          <header className="h-14 border-b flex items-center justify-between px-3 sm:px-4 bg-background shrink-0 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <SidebarTrigger />
-              <span className="text-sm font-medium text-muted-foreground">Welcome back, {displayName}</span>
+              <span className="hidden sm:inline text-sm font-medium text-muted-foreground truncate">Welcome back, {displayName}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <ThemeToggle />
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-4 w-4" />
@@ -147,7 +147,7 @@ export default function DashboardLayout() {
               </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
             <Outlet />
           </main>
         </div>
