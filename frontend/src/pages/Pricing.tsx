@@ -25,9 +25,9 @@ export default function Pricing() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`rounded-2xl p-8 border transition-all duration-300 ${
+                className={`rounded-2xl p-6 sm:p-8 border transition-all duration-300 ${
                   plan.highlighted
-                    ? "bg-card card-elevated border-primary/30 ring-1 ring-primary/20 scale-[1.02]"
+                    ? "bg-card card-elevated border-primary/30 ring-1 ring-primary/20 sm:scale-[1.02]"
                     : "bg-card card-elevated border-transparent hover:border-primary/10"
                 }`}
               >

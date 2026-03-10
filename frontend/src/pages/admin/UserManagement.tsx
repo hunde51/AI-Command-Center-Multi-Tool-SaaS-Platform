@@ -73,8 +73,8 @@ export default function UserManagement() {
         <p className="text-sm text-muted-foreground">Manage platform users and access control.</p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative w-full sm:flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
@@ -86,7 +86,7 @@ export default function UserManagement() {
             }}
           />
         </div>
-        <div className="w-[140px]">
+        <div className="w-full sm:w-[140px]">
           <Select
             value={role}
             onValueChange={(v: "ALL" | "USER" | "ADMIN") => {
@@ -102,7 +102,7 @@ export default function UserManagement() {
             </SelectContent>
           </Select>
         </div>
-        <div className="w-[160px]">
+        <div className="w-full sm:w-[160px]">
           <Select
             value={status}
             onValueChange={(v: "ALL" | "active" | "suspended") => {
@@ -118,7 +118,7 @@ export default function UserManagement() {
             </SelectContent>
           </Select>
         </div>
-        <div className="w-[120px]">
+        <div className="w-full sm:w-[120px]">
           <Select
             value={String(limit)}
             onValueChange={(v) => {
@@ -147,58 +147,60 @@ export default function UserManagement() {
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tokens Used</TableHead>
-                  <TableHead>Tools Used</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users?.map((user: AdminUserRow) => (
-                  <TableRow key={user.user_id}>
-                    <TableCell className="font-medium">{user.username}</TableCell>
-                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                    <TableCell><Badge variant="secondary">{user.role}</Badge></TableCell>
-                    <TableCell><Badge variant={user.is_active ? "default" : "destructive"} className="capitalize">{user.is_active ? "active" : "suspended"}</Badge></TableCell>
-                    <TableCell>{user.total_tokens_used.toLocaleString()}</TableCell>
-                    <TableCell className="text-muted-foreground">{user.total_tools_used.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant={user.is_active ? "destructive" : "default"}
-                          size="sm"
-                          disabled={mutation.isPending}
-                          onClick={() => mutation.mutate({ userId: user.user_id, isActive: !user.is_active })}
-                        >
-                          {user.is_active ? "Suspend" : "Activate"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={deleteMutation.isPending || user.role === "ADMIN"}
-                          onClick={() => {
-                            setTargetUserId(user.user_id);
-                            setDeleteOpen(true);
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tokens Used</TableHead>
+                    <TableHead>Tools Used</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {users?.map((user: AdminUserRow) => (
+                    <TableRow key={user.user_id}>
+                      <TableCell className="font-medium whitespace-nowrap">{user.username}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">{user.email}</TableCell>
+                      <TableCell><Badge variant="secondary">{user.role}</Badge></TableCell>
+                      <TableCell><Badge variant={user.is_active ? "default" : "destructive"} className="capitalize">{user.is_active ? "active" : "suspended"}</Badge></TableCell>
+                      <TableCell>{user.total_tokens_used.toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground">{user.total_tools_used.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant={user.is_active ? "destructive" : "default"}
+                            size="sm"
+                            disabled={mutation.isPending}
+                            onClick={() => mutation.mutate({ userId: user.user_id, isActive: !user.is_active })}
+                          >
+                            {user.is_active ? "Suspend" : "Activate"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={deleteMutation.isPending || user.role === "ADMIN"}
+                            onClick={() => {
+                              setTargetUserId(user.user_id);
+                              setDeleteOpen(true);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-xs text-muted-foreground">
           Page {usersData?.pagination.page ?? 1} of {usersData?.pagination.total_pages ?? 1}
         </p>

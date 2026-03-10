@@ -76,14 +76,14 @@ export default function AdminLayout() {
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0">
-            <div className="flex items-center gap-2">
+          <header className="h-14 border-b flex items-center justify-between px-3 sm:px-4 bg-background shrink-0 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <SidebarTrigger />
               <span className="text-sm font-medium text-destructive">Admin Panel</span>
             </div>
             <ThemeToggle />
           </header>
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
             <Outlet />
           </main>
         </div>
