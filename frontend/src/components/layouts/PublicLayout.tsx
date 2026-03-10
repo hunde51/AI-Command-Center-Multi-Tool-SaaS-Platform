@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navLinks = [
@@ -16,15 +16,19 @@ export default function PublicLayout() {
   const location = useLocation();
   const isLanding = location.pathname === "/";
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${isLanding ? "bg-transparent" : "bg-background/80 backdrop-blur-lg border-b"}`}>
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
+        <div className="container mx-auto flex items-center justify-between h-16 px-3 sm:px-4">
           <Link to="/" className="flex items-center gap-2 font-display font-bold text-lg">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <Zap className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className={isLanding ? "text-primary-foreground" : "text-foreground"}>AI Command Center</span>
+            <span className={`hidden sm:inline ${isLanding ? "text-primary-foreground" : "text-foreground"}`}>AI Command Center</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -50,8 +54,11 @@ export default function PublicLayout() {
           </div>
 
           <button
-            className={`md:hidden ${isLanding ? "text-primary-foreground" : "text-foreground"}`}
+            className={`md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border ${
+              isLanding ? "border-primary-foreground/30 text-primary-foreground" : "border-border text-foreground"
+            }`}
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle mobile navigation"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -64,7 +71,7 @@ export default function PublicLayout() {
                 {l.label}
               </Link>
             ))}
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <ThemeToggle />
               <Button variant="outline" size="sm" asChild className="flex-1">
                 <Link to="/login">Sign In</Link>
