@@ -19,8 +19,17 @@ export default function AITools() {
   const [toolInput, setToolInput] = useState("");
   const [toolOutput, setToolOutput] = useState("");
 
-  const { data: tools, isLoading } = useQuery({ queryKey: ["aiTools"], queryFn: fetchActiveToolsFromBackend });
-  const { data: history } = useQuery({ queryKey: ["toolHistory"], queryFn: fetchToolHistoryFromBackend });
+  const {
+    data: tools,
+    isLoading,
+    isError: toolsError,
+    refetch: refetchTools,
+  } = useQuery({ queryKey: ["aiTools"], queryFn: fetchActiveToolsFromBackend });
+  const {
+    data: history,
+    isError: historyError,
+    refetch: refetchHistory,
+  } = useQuery({ queryKey: ["toolHistory"], queryFn: fetchToolHistoryFromBackend });
   const executeMutation = useMutation({
     mutationFn: ({ slug, input }: { slug: string; input: string }) => executeToolFromBackend(slug, input),
     onSuccess: (result) => {
@@ -44,6 +53,20 @@ export default function AITools() {
         <h1 className="font-display text-2xl font-bold text-foreground">AI Tools</h1>
         <p className="text-sm text-muted-foreground">Purpose-built AI tools for your workflow.</p>
       </div>
+
+      {toolsError || historyError ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-destructive">Unable to load all tool data from backend.</p>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => refetchTools()}>
+              Retry tools
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => refetchHistory()}>
+              Retry history
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
