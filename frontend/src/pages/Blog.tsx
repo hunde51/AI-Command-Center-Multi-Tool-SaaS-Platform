@@ -5,18 +5,21 @@ import { Badge } from "@/components/ui/badge";
 const posts = [
   {
     id: "1",
+    slug: "clean-architecture-platform",
     title: "Designing an AI Tool Platform with Clean Architecture",
     summary: "How router/service/repository boundaries keep backend modules easy to scale.",
     tag: "Architecture",
   },
   {
     id: "2",
+    slug: "token-usage-billing",
     title: "Tracking Token Usage for Real SaaS Billing",
     summary: "A practical usage-log strategy for quotas, analytics, and future billing integration.",
     tag: "Backend",
   },
   {
     id: "3",
+    slug: "feature-flags-admin-releases",
     title: "Feature Flags for Safer Admin Releases",
     summary: "Why staged rollouts matter and how admins can gate risky capabilities.",
     tag: "Operations",
@@ -34,7 +37,7 @@ export default function Blog() {
 
         <div className="grid gap-4 max-w-4xl mx-auto">
           {posts.map((post) => (
-            <Link key={post.id} to="/features">
+            <Link key={post.id} to={`/blog/${post.slug}`}>
               <Card className="border-transparent card-elevated hover:border-primary/20 transition-colors">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

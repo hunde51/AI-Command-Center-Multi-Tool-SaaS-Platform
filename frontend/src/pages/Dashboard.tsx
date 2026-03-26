@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, BarChart3, Zap, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; label: string; value: string; sub: string }) {
@@ -30,10 +31,25 @@ export default function Dashboard() {
   const tooltipBg = isDark ? "hsl(220, 40%, 8%)" : "hsl(0, 0%, 100%)";
   const tooltipBorder = isDark ? "hsl(220, 30%, 20%)" : "hsl(220, 13%, 91%)";
 
-  const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ["usageStats"], queryFn: fetchUsageStats });
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    isError: statsError,
+    refetch: refetchStats,
+  } = useQuery({ queryKey: ["usageStats"], queryFn: fetchUsageStats });
   const { data: dashboardStatus } = useQuery({ queryKey: ["dashboardStatus"], queryFn: fetchDashboardStatus });
-  const { data: dailyUsage, isLoading: chartLoading } = useQuery({ queryKey: ["dailyUsage"], queryFn: fetchDailyUsage });
-  const { data: activities, isLoading: activitiesLoading } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
+  const {
+    data: dailyUsage,
+    isLoading: chartLoading,
+    isError: chartError,
+    refetch: refetchDailyUsage,
+  } = useQuery({ queryKey: ["dailyUsage"], queryFn: fetchDailyUsage });
+  const {
+    data: activities,
+    isLoading: activitiesLoading,
+    isError: activitiesError,
+    refetch: refetchActivities,
+  } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
 
   return (
     <div className="space-y-6">
@@ -42,6 +58,23 @@ export default function Dashboard() {
         <p className="text-sm text-muted-foreground">Overview of your AI usage and activity.</p>
         {dashboardStatus ? <p className="text-xs text-primary mt-1">Backend connected: role {dashboardStatus.role}</p> : null}
       </div>
+
+      {statsError || chartError || activitiesError ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-destructive">Some dashboard data could not load. Check backend connection and try again.</p>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => refetchStats()}>
+              Retry stats
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => refetchDailyUsage()}>
+              Retry charts
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => refetchActivities()}>
+              Retry activity
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Stats Cards */}
       {statsLoading ? (
