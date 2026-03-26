@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
+from app.core.config import settings
 from app.core.rate_limit import RedisRateLimitMiddleware
 from app.services.admin_service import AdminServiceError
 from app.services.agent_service import AgentServiceError
@@ -17,14 +18,7 @@ app = FastAPI(title="AI Command Center API", version="0.1.0")
 app.add_middleware(RedisRateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://localhost:8081",
-        "http://127.0.0.1:8081",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
