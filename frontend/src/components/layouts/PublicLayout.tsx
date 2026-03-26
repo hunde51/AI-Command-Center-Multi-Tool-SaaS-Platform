@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,13 +33,25 @@ export default function PublicLayout() {
 
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((l) => (
-              <Link
+              <NavLink
                 key={l.label}
                 to={l.to}
-                className={`text-sm font-medium transition-colors hover:text-primary ${isLanding ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-muted-foreground"}`}
+                className={({ isActive }) =>
+                  `text-sm font-medium transition-colors hover:text-primary ${
+                    isLanding ? "hover:text-primary-foreground" : "hover:text-foreground"
+                  } ${
+                    isActive
+                      ? isLanding
+                        ? "text-primary-foreground"
+                        : "text-foreground"
+                      : isLanding
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
+                  }`
+                }
               >
                 {l.label}
-              </Link>
+              </NavLink>
             ))}
           </nav>
 
@@ -67,9 +79,16 @@ export default function PublicLayout() {
         {mobileOpen && (
           <div className="md:hidden bg-background border-b p-4 space-y-3 animate-fade-in">
             {navLinks.map((l) => (
-              <Link key={l.label} to={l.to} className="block text-sm font-medium text-muted-foreground" onClick={() => setMobileOpen(false)}>
+              <NavLink
+                key={l.label}
+                to={l.to}
+                className={({ isActive }) =>
+                  `block text-sm font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`
+                }
+                onClick={() => setMobileOpen(false)}
+              >
                 {l.label}
-              </Link>
+              </NavLink>
             ))}
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <ThemeToggle />
@@ -84,7 +103,7 @@ export default function PublicLayout() {
         )}
       </header>
 
-      <main className="flex-1">
+      <main className={isLanding ? "flex-1" : "flex-1 pt-16"}>
         <Outlet />
       </main>
     </div>

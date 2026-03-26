@@ -205,23 +205,23 @@ export default function Landing() {
               <ul className="space-y-2 text-xs text-background/50">
                 <li><Link to="/features" className="hover:text-background/80">Features</Link></li>
                 <li><Link to="/pricing" className="hover:text-background/80">Pricing</Link></li>
-                <li><a href="#" className="hover:text-background/80">Changelog</a></li>
+                <li><Link to="/docs" className="hover:text-background/80">Docs</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-sm text-background mb-3">Company</h4>
               <ul className="space-y-2 text-xs text-background/50">
-                <li><a href="#" className="hover:text-background/80">About</a></li>
-                <li><a href="#" className="hover:text-background/80">Blog</a></li>
-                <li><a href="#" className="hover:text-background/80">Careers</a></li>
+                <li><Link to="/docs" className="hover:text-background/80">About</Link></li>
+                <li><Link to="/blog" className="hover:text-background/80">Blog</Link></li>
+                <li><Link to="/docs" className="hover:text-background/80">Careers</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-sm text-background mb-3">Legal</h4>
               <ul className="space-y-2 text-xs text-background/50">
-                <li><a href="#" className="hover:text-background/80">Privacy</a></li>
-                <li><a href="#" className="hover:text-background/80">Terms</a></li>
-                <li><a href="#" className="hover:text-background/80">Security</a></li>
+                <li><Link to="/docs" className="hover:text-background/80">Privacy</Link></li>
+                <li><Link to="/docs" className="hover:text-background/80">Terms</Link></li>
+                <li><Link to="/docs" className="hover:text-background/80">Security</Link></li>
               </ul>
             </div>
           </div>
