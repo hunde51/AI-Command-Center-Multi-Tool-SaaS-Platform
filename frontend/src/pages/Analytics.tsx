@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchDailyUsage } from "@/services/runtimeData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { useTheme } from "next-themes";
 
@@ -15,7 +16,12 @@ export default function Analytics() {
   const tooltipBg = isDark ? "hsl(220, 40%, 8%)" : "hsl(0, 0%, 100%)";
   const tooltipBorder = isDark ? "hsl(220, 30%, 20%)" : "hsl(220, 13%, 91%)";
 
-  const { data: dailyUsage, isLoading } = useQuery({ queryKey: ["dailyUsage"], queryFn: fetchDailyUsage });
+  const {
+    data: dailyUsage,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({ queryKey: ["dailyUsage"], queryFn: fetchDailyUsage });
 
   return (
     <div className="space-y-6">
@@ -23,6 +29,15 @@ export default function Analytics() {
         <h1 className="font-display text-2xl font-bold text-foreground">Analytics</h1>
         <p className="text-sm text-muted-foreground">Detailed insights into your AI usage.</p>
       </div>
+
+      {isError ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-destructive">Analytics data could not be loaded.</p>
+          <Button size="sm" variant="outline" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-2xl bg-card p-5 card-elevated border border-transparent">

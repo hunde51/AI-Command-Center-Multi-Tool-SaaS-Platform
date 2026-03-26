@@ -13,6 +13,7 @@ import Pricing from "@/pages/Pricing";
 import Features from "@/pages/Features";
 import Docs from "@/pages/Docs";
 import Blog from "@/pages/Blog";
+import BlogPost from "@/pages/BlogPost";
 import Dashboard from "@/pages/Dashboard";
 import AIChat from "@/pages/AIChat";
 import AITools from "@/pages/AITools";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/features" element={<Features />} />
               <Route path="/docs" element={<Docs />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
             </Route>
             <Route path="/login" element={<Login />} />
 

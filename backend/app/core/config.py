@@ -33,6 +33,18 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 10
     rate_limit_per_minute: int = 120
     rate_limit_window_seconds: int = 60
+    cors_origins: str = (
+        "http://localhost:8080,"
+        "http://127.0.0.1:8080,"
+        "http://localhost:8081,"
+        "http://127.0.0.1:8081,"
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173"
+    )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @model_validator(mode="after")
     def build_database_url(self) -> "Settings":
