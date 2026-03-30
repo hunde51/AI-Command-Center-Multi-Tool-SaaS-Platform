@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Zap, MessageSquare, Wand2, Shield, BarChart3, Users, ArrowRight, Star, Check } from "lucide-react";
-import { mockPricingPlans } from "@/services/mockApi";
+import { fetchPublicPricingPlans } from "@/services/backendApi";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const features = [
   { icon: MessageSquare, title: "AI Chat", description: "Multi-model chat interface with GPT-4o, Claude 3.5, and more. Full markdown rendering and conversation history." },
@@ -25,6 +27,11 @@ const testimonials = [
 ];
 
 export default function Landing() {
+  const { data: pricingPlans, isLoading: pricingLoading } = useQuery({
+    queryKey: ["publicPricingPlans"],
+    queryFn: fetchPublicPricingPlans,
+  });
+
   return (
     <div className="flex flex-col">
       {/* Hero */}
@@ -113,7 +120,10 @@ export default function Landing() {
             <p className="mt-4 text-muted-foreground">Start free, scale as you grow.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {mockPricingPlans.map((plan) => (
+            {pricingLoading ? (
+              Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[420px] rounded-2xl" />)
+            ) : pricingPlans?.length ? (
+              pricingPlans.map((plan) => (
               <div
                 key={plan.id}
                 className={`rounded-2xl p-6 border transition-all duration-300 ${
@@ -143,7 +153,12 @@ export default function Landing() {
                   <Link to="/login">{plan.cta}</Link>
                 </Button>
               </div>
-            ))}
+              ))
+            ) : (
+              <div className="md:col-span-3 rounded-xl border border-border bg-card p-6 text-center">
+                <p className="text-sm text-muted-foreground">Pricing plans will appear here once configured.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

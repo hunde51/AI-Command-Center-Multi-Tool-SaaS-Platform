@@ -328,6 +328,19 @@ type ChatModelsPayload = {
   default_model: string;
 };
 
+type PublicPricingPlansPayload = {
+  plans: Array<{
+    id: string;
+    name: string;
+    price: string;
+    period: string;
+    description: string;
+    features: string[];
+    highlighted?: boolean;
+    cta: string;
+  }>;
+};
+
 type CurrentUserPayload = {
   user: {
     id: string;
@@ -388,9 +401,30 @@ export async function loginWithBackend(email: string, password: string): Promise
   setUserRole(dashboard.data.role);
 }
 
+export async function requestPasswordResetWithBackend(email: string): Promise<void> {
+  await request<ApiEnvelope<{ token: string | null }>>("/auth/password-reset/request", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
 export async function fetchDashboardStatus(): Promise<DashboardResponse> {
   const result = await request<ApiEnvelope<DashboardResponse>>("/dashboard");
   return result.data;
+}
+
+export async function fetchPublicPricingPlans(): Promise<Array<{
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+  cta: string;
+}>> {
+  const result = await request<ApiEnvelope<PublicPricingPlansPayload>>("/pricing/plans");
+  return result.data.plans;
 }
 
 export async function fetchChatConversations(): Promise<Conversation[]> {

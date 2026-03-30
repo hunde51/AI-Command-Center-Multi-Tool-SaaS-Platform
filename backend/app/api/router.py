@@ -7,6 +7,7 @@ from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
 from app.api.dashboard import router as dashboard_router
 from app.api.files import router as files_router
+from app.api.pricing import router as pricing_router
 from app.api.tools import router as tools_router
 from app.api.users import router as users_router
 
@@ -20,3 +21,4 @@ api_router.include_router(tools_router)
 api_router.include_router(agents_router)
 api_router.include_router(files_router)
 api_router.include_router(users_router)
+api_router.include_router(pricing_router)

@@ -5,7 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getUserRole, loginWithBackend, registerWithBackend } from "@/services/backendApi";
+import { getUserRole, loginWithBackend, registerWithBackend, requestPasswordResetWithBackend } from "@/services/backendApi";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Login() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -14,8 +21,34 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleForgotPassword = async () => {
+    const value = forgotEmail.trim();
+    if (!value) {
+      toast({ title: "Enter your email address", variant: "destructive" });
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await requestPasswordResetWithBackend(value);
+      toast({
+        title: "Password reset requested",
+        description: "If the account exists, reset instructions were generated.",
+      });
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to request password reset";
+      toast({ title: message, variant: "destructive" });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +114,18 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                {mode === "signin" ? <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a> : null}
+                {mode === "signin" ? (
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => {
+                      setForgotEmail(email);
+                      setForgotOpen(true);
+                    }}
+                  >
+                    Forgot password?
+                  </button>
+                ) : null}
               </div>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
@@ -102,6 +146,38 @@ export default function Login() {
           </p>
         </div>
       </div>
+
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="forgot-email">Email</Label>
+            <Input
+              id="forgot-email"
+              type="email"
+              placeholder="you@company.com"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void handleForgotPassword();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setForgotOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => void handleForgotPassword()} disabled={forgotLoading || !forgotEmail.trim()}>
+              {forgotLoading ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="hidden lg:flex flex-1 hero-gradient hero-grid items-center justify-center relative overflow-hidden">
         <div className="absolute h-[400px] w-[400px] rounded-full bg-primary/10 blur-[100px] animate-pulse-glow" />

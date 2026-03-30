@@ -21,6 +21,15 @@ class SubscriptionRepository:
         )
         return result.scalar_one_or_none()
 
+    async def list_plans(self) -> list[SubscriptionPlan]:
+        result = await self.db.execute(
+            select(SubscriptionPlan).order_by(
+                SubscriptionPlan.price.asc(),
+                SubscriptionPlan.monthly_token_limit.asc(),
+            )
+        )
+        return list(result.scalars().all())
+
     async def get_user_subscription(self, *, user_id: UUID) -> UserSubscription | None:
         result = await self.db.execute(select(UserSubscription).where(UserSubscription.user_id == user_id))
         return result.scalar_one_or_none()
