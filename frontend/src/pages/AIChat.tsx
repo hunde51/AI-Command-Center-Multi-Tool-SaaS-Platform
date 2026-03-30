@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   deleteChatConversation,
   fetchChatConversationHistory,
+  fetchChatModelsFromBackend,
   fetchChatConversations,
   getUserEmail,
   getUserName,
@@ -88,6 +89,11 @@ export default function AIChat() {
     enabled: Boolean(selectedConvId),
   });
 
+  const { data: chatModels } = useQuery({
+    queryKey: ["chatModels"],
+    queryFn: fetchChatModelsFromBackend,
+  });
+
   const selectedConv = conversations?.find((c) => c.id === selectedConvId);
 
   useEffect(() => {
@@ -95,6 +101,14 @@ export default function AIChat() {
       setSelectedConvId(conversations[0].id);
     }
   }, [conversations, selectedConvId, isCreatingNewChat]);
+
+  useEffect(() => {
+    if (!chatModels) return;
+    setModel((current) => {
+      if (chatModels.models.includes(current)) return current;
+      return chatModels.default_model || chatModels.models[0] || "configured-model";
+    });
+  }, [chatModels]);
 
   useEffect(() => {
     if (isCreatingNewChat) {
@@ -112,8 +126,8 @@ export default function AIChat() {
   }, [localMessages]);
 
   const mutation = useMutation({
-    mutationFn: ({ content, conversationId }: { content: string; conversationId: string | null }) =>
-      sendChatMessage(conversationId, content),
+    mutationFn: ({ content, conversationId, modelName }: { content: string; conversationId: string | null; modelName: string }) =>
+      sendChatMessage(conversationId, content, modelName),
     onSuccess: async (result) => {
       const shouldPrefixGreeting = isCreatingNewChat;
       setIsCreatingNewChat(false);
@@ -196,7 +210,7 @@ export default function AIChat() {
       timestamp: new Date(),
     };
     setLocalMessages((prev) => [...prev, userMsg]);
-    mutation.mutate({ content, conversationId: selectedConvId });
+    mutation.mutate({ content, conversationId: selectedConvId, modelName: model });
     setInputValue("");
   };
 
@@ -383,7 +397,11 @@ export default function AIChat() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="configured-model">Configured Model</SelectItem>
+              {(chatModels?.models?.length ? chatModels.models : ["configured-model"]).map((modelName) => (
+                <SelectItem key={modelName} value={modelName}>
+                  {modelName}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

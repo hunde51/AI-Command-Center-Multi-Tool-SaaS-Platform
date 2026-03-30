@@ -43,8 +43,19 @@ async def chat(
         current_user=current_user,
         message=payload.message,
         conversation_id=payload.conversation_id,
+        model_name=payload.model_name,
     )
     return api_response(True, "Message processed", result.model_dump())
+
+
+@router.get("/models")
+async def list_models(current_user: User = Depends(get_current_active_user)) -> dict:
+    selector = ModelSelector()
+    models = selector.list_allowed_models_for_role(role=current_user.role.value)
+    default_model = selector.select_for_plan(None)
+    if default_model not in models and models:
+        default_model = models[0]
+    return api_response(True, "Chat models fetched", {"models": models, "default_model": default_model})
 
 
 @router.get("/health/provider")

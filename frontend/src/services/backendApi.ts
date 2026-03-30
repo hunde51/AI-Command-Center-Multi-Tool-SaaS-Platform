@@ -323,6 +323,11 @@ type FeatureFlagPayload = {
   updated_by: string | null;
 };
 
+type ChatModelsPayload = {
+  models: string[];
+  default_model: string;
+};
+
 type CurrentUserPayload = {
   user: {
     id: string;
@@ -404,14 +409,24 @@ export async function fetchChatConversationHistory(conversationId: string): Prom
   return result.data.messages.map(toMessage);
 }
 
-export async function sendChatMessage(conversationId: string | null, content: string): Promise<ChatSendPayload> {
+export async function sendChatMessage(
+  conversationId: string | null,
+  content: string,
+  modelName?: string,
+): Promise<ChatSendPayload> {
   const result = await request<ApiEnvelope<ChatSendPayload>>("/chat", {
     method: "POST",
     body: JSON.stringify({
       conversation_id: conversationId,
       message: content,
+      model_name: modelName,
     }),
   });
+  return result.data;
+}
+
+export async function fetchChatModelsFromBackend(): Promise<ChatModelsPayload> {
+  const result = await request<ApiEnvelope<ChatModelsPayload>>("/chat/models");
   return result.data;
 }
 

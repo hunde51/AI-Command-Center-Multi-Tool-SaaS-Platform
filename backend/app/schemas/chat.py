@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class ChatRequest(BaseModel):
     conversation_id: UUID | None = None
     message: str = Field(min_length=1, max_length=8000)
+    model_name: str | None = Field(default=None, min_length=1, max_length=120)
 
     @field_validator("message")
     @classmethod

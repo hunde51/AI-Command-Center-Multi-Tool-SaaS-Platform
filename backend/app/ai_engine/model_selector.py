@@ -10,12 +10,14 @@ class ModelSelector:
             "gemini-2.0-flash",
             "gemini-2.5-flash",
             "gemini-2.5-pro",
+            "gemini-3-flash",
             "gpt-4o-mini",
             "gpt-4.1-mini",
         },
         UserRole.USER.value: {
             "gemini-2.0-flash",
             "gemini-2.5-flash",
+            "gemini-3-flash",
             "gpt-4o-mini",
         },
     }

@@ -45,6 +45,7 @@ class ChatService:
         current_user: User,
         message: str,
         conversation_id: UUID | None,
+        model_name: str | None,
     ) -> ChatResponse:
         if not current_user.is_active:
             raise ChatError("Inactive user", status.HTTP_403_FORBIDDEN)
@@ -70,7 +71,15 @@ class ChatService:
                 token_count=0,
             )
 
-            model_name = self.model_selector.select_for_plan(None)
+            resolved_model_name = self.model_selector.select_for_plan(None)
+            if model_name:
+                requested_model = model_name.strip()
+                if not self.model_selector.is_model_allowed_for_role(
+                    model_name=requested_model,
+                    role=current_user.role.value,
+                ):
+                    raise ChatError("Selected model is not allowed", status.HTTP_403_FORBIDDEN)
+                resolved_model_name = requested_model
             history = [
                 {"role": msg.role, "content": msg.content}
                 for msg in existing_messages
@@ -87,7 +96,7 @@ class ChatService:
                     requested_tokens=max(100, len(message) // 3),
                 )
             ai_result = await self.provider.generate_response(
-                model=model_name,
+                model=resolved_model_name,
                 prompt=message,
                 messages=history,
                 api_key=api_key,
