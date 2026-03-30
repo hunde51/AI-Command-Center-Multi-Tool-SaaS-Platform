@@ -323,6 +323,20 @@ type FeatureFlagPayload = {
   updated_by: string | null;
 };
 
+type CurrentUserPayload = {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    username: string;
+    role: "USER" | "ADMIN";
+    is_active: boolean;
+    is_email_verified: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+};
+
 function toMessage(item: { id: string; role: "user" | "assistant"; content: string; created_at: string }): Message {
   return {
     id: item.id,
@@ -618,4 +632,25 @@ export async function updateAdminFeatureFlag(flagKey: string, enabled: boolean):
     body: JSON.stringify({ enabled }),
   });
   return result.data.item;
+}
+
+export async function fetchCurrentUserProfile(): Promise<{ id: string; name: string; email: string; username: string }> {
+  const result = await request<ApiEnvelope<CurrentUserPayload>>("/users/me");
+  return result.data.user;
+}
+
+export async function updateCurrentUserProfile(payload: { name: string; email: string }): Promise<{ id: string; name: string; email: string; username: string }> {
+  const result = await request<ApiEnvelope<CurrentUserPayload>>("/users/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  setUserName(result.data.user.name);
+  setUserEmail(result.data.user.email);
+  return result.data.user;
+}
+
+export async function deleteCurrentUserAccount(): Promise<void> {
+  await request<ApiEnvelope<Record<string, never>>>("/users/me", {
+    method: "DELETE",
+  });
 }

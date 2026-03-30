@@ -25,3 +25,8 @@ class UserRead(BaseModel):
     is_email_verified: bool
     created_at: datetime
     updated_at: datetime
+
+
+class UserSelfUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=120)
+    email: EmailStr | None = None

@@ -7,7 +7,11 @@ import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 
 export default function SystemHealth() {
   const { data: overview, isLoading } = useQuery({ queryKey: ["admin-overview"], queryFn: fetchAdminOverviewFromBackend });
-  const { data: providerHealth, isLoading: providerLoading } = useQuery({ queryKey: ["provider-health"], queryFn: fetchProviderHealthFromBackend });
+  const {
+    data: providerHealth,
+    isLoading: providerLoading,
+    isError: providerError,
+  } = useQuery({ queryKey: ["provider-health"], queryFn: fetchProviderHealthFromBackend });
   const metrics = overview ? [
     { label: "Total Conversations", value: overview.total_conversations, unit: "", status: "healthy", trend: "up" as const },
     { label: "Total Messages", value: overview.total_messages, unit: "", status: "healthy", trend: "up" as const },
@@ -46,10 +50,16 @@ export default function SystemHealth() {
               <div>
                 <p className="text-sm font-medium text-foreground">AI Provider Health</p>
                 <p className="text-xs text-muted-foreground">
-                  Provider: {providerHealth?.provider} | Model: {providerHealth?.model}
+                  {providerError
+                    ? "Provider health check failed. Verify backend/provider connectivity."
+                    : providerHealth
+                      ? `Provider: ${providerHealth.provider} | Model: ${providerHealth.model}`
+                      : "Provider status is currently unavailable."}
                 </p>
               </div>
-              <Badge variant="default">reachable</Badge>
+              <Badge variant={providerError ? "destructive" : providerHealth ? "default" : "secondary"}>
+                {providerError ? "unreachable" : providerHealth ? "reachable" : "unknown"}
+              </Badge>
             </div>
           )}
         </CardContent>
