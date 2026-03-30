@@ -13,7 +13,7 @@ export default function DashboardSettings() {
   const [usageAlerts, setUsageAlerts] = useState(true);
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="w-full max-w-2xl mx-auto space-y-8">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your account preferences.</p>
