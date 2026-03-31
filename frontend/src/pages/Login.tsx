@@ -132,6 +132,19 @@ export default function Login() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (mode === "signin" ? "Signing in..." : "Creating account...") : (mode === "signin" ? "Sign In" : "Sign Up")}
             </Button>
+            {mode === "signin" ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setForgotEmail(email);
+                  setForgotOpen(true);
+                }}
+              >
+                Reset Password
+              </Button>
+            ) : null}
           </form>
 
           <p className="text-sm text-muted-foreground text-center mt-6">

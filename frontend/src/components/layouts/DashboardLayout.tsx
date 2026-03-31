@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { clearTokens, getUserEmail, getUserName } from "@/services/backendApi";
-import { fetchUsageStats } from "@/services/runtimeData";
+import { fetchActivities, fetchUsageStats } from "@/services/runtimeData";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navItems = [
@@ -91,6 +91,7 @@ function DashboardSidebar() {
 }
 
 export default function DashboardLayout() {
+  const { data: activities } = useQuery({ queryKey: ["activities"], queryFn: fetchActivities });
   const storedName = getUserName();
   const userEmail = getUserEmail();
   const fallbackName = userEmail ? userEmail.split("@")[0] : "";
@@ -107,6 +108,8 @@ export default function DashboardLayout() {
     .map((part) => part[0])
     .join("")
     .toUpperCase() || "M";
+  const recentActivities = (activities ?? []).slice(0, 5);
+  const hasNotifications = recentActivities.length > 0;
 
   return (
     <SidebarProvider>
@@ -120,10 +123,32 @@ export default function DashboardLayout() {
             </div>
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <ThemeToggle />
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+                    <Bell className="h-4 w-4" />
+                    {hasNotifications ? <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" /> : null}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">Notifications</div>
+                  <DropdownMenuSeparator />
+                  {recentActivities.length ? (
+                    recentActivities.map((item) => (
+                      <DropdownMenuItem key={item.id} className="flex flex-col items-start gap-0.5 py-2">
+                        <span className="text-sm text-foreground">{item.action}</span>
+                        <span className="text-xs text-muted-foreground">{item.tool} · {item.timestamp}</span>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-3 text-xs text-muted-foreground">No new notifications</div>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/analytics" className="w-full">View activity</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">

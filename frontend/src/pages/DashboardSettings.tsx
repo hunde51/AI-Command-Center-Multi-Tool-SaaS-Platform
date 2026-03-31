@@ -114,7 +114,7 @@ export default function DashboardSettings() {
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} disabled={profileLoading} />
+            <Input value={email} readOnly disabled={profileLoading} />
           </div>
         </div>
         <Button
